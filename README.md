@@ -157,6 +157,32 @@ volumes:
 
 Then `docker compose up -d` with the same `.env` values from above. Pin a version by replacing `:latest` with a tag such as `:v0.1.0`.
 
+A matching `.env` file, also available as [`.env.example`](./.env.example):
+
+```sh
+# .env — generate each secret with: openssl rand -hex 32
+POSTGRES_PASSWORD=change-me
+MINIO_ROOT_USER=vitryne
+MINIO_ROOT_PASSWORD=change-me
+DB_IDHASHKEY=change-me
+COOKIE_KEY=change-me
+
+# Public hostname the site is served from; leave empty to accept any host
+COOKIE_DOMAIN=clips.example.com
+
+# Set to false after your accounts exist
+ALLOW_REGISTRATION=true
+MAX_UPLOAD_SIZE=5GB
+
+# Host port; keep it on localhost behind a TLS proxy
+HTTP_BIND=127.0.0.1:8080
+
+# Optional: pull a published image instead of replacing it in the compose file
+# VITRYNE_IMAGE=ghcr.io/wtao02/vitryne:v0.1.0
+```
+
+`DB_IDHASHKEY` is permanent: changing it later changes every clip URL and breaks existing shared links.
+
 If you already run Postgres and an S3 bucket, use only the `vitryne` service and point `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` and `S3_ADDRESS`, `S3_BUCKET`, `S3_ACCESS`, `S3_SECRET`, `S3_SECURE` at them. The package is public, so anonymous pulls work; for a private package, run `docker login ghcr.io -u <user>` first.
 
 ### Notes
