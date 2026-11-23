@@ -69,8 +69,9 @@ Published images are built from `master` and from `v*` tags:
 ```
 ghcr.io/wtao02/vitryne:latest
 ghcr.io/wtao02/vitryne:<version>
-ghcr.io/wtao02/vitryne:gpu-latest
 ```
+
+GPU images (`:gpu-latest`, `:gpu-<version>`) are built only when the repository variable `PUBLISH_GPU` is `true`, because the CUDA base image is not publicly pullable.
 
 To pull instead of build, use `docker-compose.remote.yml`:
 

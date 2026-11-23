@@ -1,5 +1,7 @@
 name: Publish Images
 
+# The GPU job is opt-in: its CUDA base image is not publicly pullable, so the
+# build only runs when the repository variable PUBLISH_GPU is set to true.
 on:
   push:
     branches:
@@ -56,6 +58,7 @@ jobs:
 
   gpu:
     name: GPU image (amd64)
+    if: vars.PUBLISH_GPU == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
