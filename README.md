@@ -73,14 +73,91 @@ ghcr.io/wtao02/vitryne:<version>
 
 GPU images (`:gpu-latest`, `:gpu-<version>`) are built only when the repository variable `PUBLISH_GPU` is `true`, because the CUDA base image is not publicly pullable.
 
-To pull instead of build, use `docker-compose.remote.yml`:
+To pull instead of build, use the bundled `docker-compose.remote.yml`:
 
 ```sh
 docker compose -f docker-compose.remote.yml pull
 docker compose -f docker-compose.remote.yml up -d
 ```
 
-Pin a version with `VITRYNE_IMAGE=ghcr.io/wtao02/vitryne:v0.1.0`. The package must be public for anonymous pulls, or log in with `docker login ghcr.io -u <user>` first.
+Or write a minimal `docker-compose.yml` yourself. This is a complete stack using the published image:
+
+```yaml
+# docker-compose.yml
+services:
+  vitryne:
+    image: ghcr.io/wtao02/vitryne:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      DB_NAME: postgres
+      DB_IDHASHKEY: ${DB_IDHASHKEY:?set DB_IDHASHKEY}
+      COOKIE_KEY: ${COOKIE_KEY:?set COOKIE_KEY}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-5GB}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      S3_ADDRESS: minio:9000
+      S3_BUCKET: clips
+      S3_ACCESS: ${MINIO_ROOT_USER:-vitryne}
+      S3_SECRET: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}
+      S3_SECURE: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+
+  postgres:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: elestio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vitryne}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+
+  createbuckets:
+    image: bitnamilegacy/minio-client:latest
+    depends_on:
+      - minio
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      until /opt/bitnami/minio-client/bin/mc alias set vitryne http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 1; done;
+      /opt/bitnami/minio-client/bin/mc mb -p vitryne/clips;
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vitryne}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+volumes:
+  pg_data: {}
+  minio_data: {}
+```
+
+Then `docker compose up -d` with the same `.env` values from above. Pin a version by replacing `:latest` with a tag such as `:v0.1.0`.
+
+If you already run Postgres and an S3 bucket, use only the `vitryne` service and point `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` and `S3_ADDRESS`, `S3_BUCKET`, `S3_ACCESS`, `S3_SECRET`, `S3_SECURE` at them. The package is public, so anonymous pulls work; for a private package, run `docker login ghcr.io -u <user>` first.
 
 ### Notes
 
