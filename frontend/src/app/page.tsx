@@ -1,108 +1,340 @@
 "use client";
 
-import { getClips, Progress, Clip, ProgressObject, searchClips } from "@/shared/api";
-import ClipCard from "@/shared/clip-card";
+import {
+  Category,
+  Clip,
+  Progress,
+  ProgressObject,
+  getCategories,
+  getClips,
+  searchClips,
+} from "@/shared/api";
+import { UserContext } from "@/context/user-context";
+import ClipGrid, { ClipGridSkeleton } from "@/shared/clip-grid";
+import Alert from "@/shared/alert";
+import { FolderChips, FolderItem, FolderRail } from "@/shared/folder-filter";
+import PageTitle from "@/shared/page-title";
+import { Button, buttonStyles } from "@/shared/ui";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useContext, useEffect, useState } from "react";
 
 export default function Home() {
-  const [videos, setVideos] = useState<Clip[] | null>(null);
-  const [videoProgresses, setVideoProgresses] = useState<ProgressObject>({});
-
   const params = useSearchParams();
+  const [query, setQuery] = useState<string | null>(null);
+  const isSearch = (query ?? "").length > 0;
+  const userContext = useContext(UserContext);
+
+  const [videos, setVideos] = useState<Clip[] | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<number | "all" | "none">("all");
+  const [videoProgresses, setVideoProgresses] = useState<ProgressObject>({});
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    const getVids = async () => {
-      const vids = await getClips();
-      setVideos(vids);
-    };
-    const getSearchedVids = async () => {
-      const vids = await searchClips(params.get("search") as string);
-      setVideos(vids);
-    };
-    params.get("search") ? getSearchedVids() : getVids();
+    setQuery((new URLSearchParams(window.location.search).get("search") ?? "").trim());
   }, [params]);
 
   useEffect(() => {
-    if (!videos) return;
-    const getProgress = async () => {
-      // If there are no videos stop the interval
-      if (!videos.length) {
-        clearInterval(interval);
-        return;
+    setSelectedCategory("all");
+  }, [userContext.user?.id]);
+
+  useEffect(() => {
+    if (userContext.loading || query === null) return;
+
+    if (!userContext.loggedIn) {
+      setVideos([]);
+      setCategories([]);
+      setError(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    setVideos(null);
+    setError(false);
+
+    const load = async () => {
+      try {
+        const [vids, folders] = await Promise.all([
+          isSearch ? searchClips(query) : getClips(),
+          getCategories(),
+        ]);
+
+        if (!cancelled) {
+          setVideos(vids);
+          setCategories(folders);
+        }
+      } catch {
+        if (!cancelled) {
+          setVideos([]);
+          setCategories([]);
+          setError(true);
+        }
       }
-
-      // Get the ids of all videos that are still processing
-      const inProgressVideoIds = videos
-        .filter((video) => video.processing)
-        .map((video) => video.id)
-        .join("&cid=");
-
-      // If there are no videos in progress stop the interval
-      if (!inProgressVideoIds) {
-        clearInterval(interval);
-        return;
-      }
-
-      const resp = await fetch(`/api/clips/progress?cid=` + inProgressVideoIds);
-
-      // If the request fails, we don't want to stop the interval
-      if (!resp.ok) {
-        return;
-      }
-
-      // If the server returns 204, there are no videos in progress anymore
-      // so we can stop the interval and set all videos to not processing
-      if (resp.status === 204) {
-        setVideos(
-          videos.map((video) => {
-            return { ...video, processing: false };
-          })
-        );
-        clearInterval(interval);
-        return;
-      }
-
-      const { clips } = (await resp.json()) as Progress;
-      setVideos(
-        videos
-          // If the clip progress is -2, it failed to encode, so we don't want to show it
-          .filter((video) => clips[video.id] !== -2)
-          // If the clip is still processing, but we don't have a progress value for it, set it to be done processing
-          .map((video) => ({ ...video, processing: video.processing && !!clips[video.id] }))
-      );
-      setVideoProgresses(clips);
     };
-    const interval = setInterval(getProgress, 2000);
-    return () => clearInterval(interval);
-  }, [videos]);
 
-  return (
-    <main className="h-full">
-      <div className="flex justify-center py-3 mx-3">
-        {videos?.length === 0 && (
-          <div className="flex flex-col items-center justify-center w-full">
-            <h1 className="text-4xl font-bold">No videos found</h1>
-            {params.get("search") && <p className="text-xl">Try searching for something else</p>}
-          </div>
-        )}
-        {videos && videos.length > 0 && (
-          <ul role="list" className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-10 xl:gap-16 2xl:gap-24">
-            {videos.map((video) => (
-              <li className="m-0" key={video.id}>
-                {video.processing ? (
-                  <ClipCard video={video} progress={videoProgresses[video.id]} />
-                ) : (
-                  <Link href={`/clips/${video.id}`}>
-                    <ClipCard video={video} />
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSearch, query, reloadKey, userContext.loading, userContext.loggedIn]);
+
+  useEffect(() => {
+    if (
+      selectedCategory !== "all" &&
+      selectedCategory !== "none" &&
+      !categories.some((category) => category.id === selectedCategory)
+    ) {
+      setSelectedCategory("all");
+    }
+  }, [categories, selectedCategory]);
+
+  const processingKey =
+    videos
+      ?.filter((video) => video.processing)
+      .map((video) => video.id)
+      .join(",") ?? "";
+
+  useEffect(() => {
+    if (!processingKey) return;
+
+    let cancelled = false;
+
+    const tick = async () => {
+      try {
+        const resp = await fetch(`/api/clips/progress?cid=${processingKey}`);
+        if (cancelled) return;
+
+        if (resp.status === 204) {
+          setVideos((current) =>
+            current?.map((video) => ({ ...video, processing: false })) ?? current
+          );
+          return;
+        }
+
+        if (!resp.ok) return;
+
+        const { clips } = (await resp.json()) as Progress;
+        setVideos((current) =>
+          current
+            ?.filter((video) => clips[video.id] !== -2)
+            .map((video) => ({
+              ...video,
+              processing: video.processing && clips[video.id] !== undefined,
+            })) ?? current
+        );
+        setVideoProgresses((current) => ({ ...current, ...clips }));
+      } catch {
+        // Keep polling; a transient request failure should not stop progress.
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 2000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [processingKey]);
+
+  const categoryCount = (categoryID: number) =>
+    videos?.filter((video) => video.category_id === categoryID).length ?? 0;
+
+  const uncategorizedCount = videos?.filter((video) => video.category_id == null).length ?? 0;
+
+  const folderItems: FolderItem[] = [
+    { id: "all", label: "All clips", count: videos?.length ?? 0 },
+    ...categories.map((category) => ({
+      id: category.id,
+      label: category.name,
+      count: categoryCount(category.id),
+    })),
+    ...(categories.length > 0 || uncategorizedCount > 0
+      ? [{ id: "none" as const, label: "Uncategorized", count: uncategorizedCount }]
+      : []),
+  ];
+
+  const filteredVideos =
+    videos?.filter((video) => {
+      if (selectedCategory === "all") return true;
+      if (selectedCategory === "none") return video.category_id == null;
+      return video.category_id === selectedCategory;
+    }) ?? [];
+
+  const hasFolders = categories.length > 0;
+  const folderEmpty = videos !== null && videos.length > 0 && filteredVideos.length === 0;
+  const selectedFolderLabel =
+    selectedCategory === "none"
+      ? "Uncategorized"
+      : selectedCategory === "all"
+        ? null
+        : categories.find((category) => category.id === selectedCategory)?.name ?? null;
+
+  const manageFolders = userContext.user ? (
+    <Link
+      href={`/users/${userContext.user.id}`}
+      className="mt-3 flex h-8 w-full items-center rounded-md px-3 text-[13px] text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+    >
+      Manage folders
+    </Link>
+  ) : null;
+
+  const library =
+    videos === null ? (
+      <ClipGridSkeleton />
+    ) : videos.length === 0 ? (
+      <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border px-6 py-20 text-center">
+        <p className="text-sm text-muted">
+          {isSearch ? `No clips match “${query}”.` : "No clips yet."}
+        </p>
+        {isSearch ? (
+          <a href="/" className={buttonStyles({ variant: "secondary", size: "sm" })}>
+            Clear search
+          </a>
+        ) : (
+          <Link href="/upload" className={buttonStyles({ size: "sm" })}>
+            Upload the first clip
+          </Link>
         )}
       </div>
+    ) : folderEmpty ? (
+      <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border px-6 py-20 text-center">
+        <p className="text-sm text-muted">
+          {isSearch
+            ? `No clips in this folder match “${query}”.`
+            : "No clips in this folder."}
+        </p>
+        <Button variant="secondary" size="sm" onClick={() => setSelectedCategory("all")}>
+          Show all clips
+        </Button>
+      </div>
+    ) : (
+      <ClipGrid videos={filteredVideos} progresses={videoProgresses} />
+    );
+
+  return (
+    <main className="mx-auto w-full max-w-page px-4 py-8 sm:px-6 sm:py-10">
+      <PageTitle title={isSearch ? `Search: ${query}` : "Clips"} />
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-medium tracking-[-0.01em] text-fg sm:text-[28px]">
+            {isSearch ? "Search" : "Clips"}
+          </h1>
+          <p className="mt-1 text-[13px] text-muted">
+            {!userContext.loading && !userContext.loggedIn ? (
+              "Private library"
+            ) : isSearch ? (
+              <>
+                Results for <span className="text-fg">“{query}”</span>
+                {selectedFolderLabel && (
+                  <>
+                    {" "}
+                    in <span className="text-fg">{selectedFolderLabel}</span>
+                  </>
+                )}
+                {videos && (
+                  <span className="font-mono text-[12px] text-muted-2">
+                    {" "}
+                    · {filteredVideos.length}
+                  </span>
+                )}
+              </>
+            ) : selectedFolderLabel ? (
+              <>
+                Folder <span className="text-fg">“{selectedFolderLabel}”</span>
+                {videos && (
+                  <span className="font-mono text-[12px] text-muted-2">
+                    {" "}
+                    · {filteredVideos.length}
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                Recent uploads
+                {videos && (
+                  <span className="font-mono text-[12px] text-muted-2">
+                    {" "}
+                    · {filteredVideos.length}
+                  </span>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+        {isSearch && (
+          <a href="/" className={buttonStyles({ variant: "ghost", size: "sm" })}>
+            Clear search
+          </a>
+        )}
+      </div>
+
+      {!userContext.loading && !userContext.loggedIn ? (
+        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border px-6 py-20 text-center">
+          <p className="text-sm text-muted">Your clip library is private.</p>
+          <p className="max-w-sm text-sm text-muted">
+            Sign in to see your clips. A shared clip link still plays for anyone who has it.
+          </p>
+          <Link href="/login" className={buttonStyles({ size: "sm" })}>
+            Sign in
+          </Link>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-border px-6 py-20 text-center">
+          <Alert type="error" message="Couldn’t load clips. Check the connection and try again." />
+          <Button variant="secondary" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Try again
+          </Button>
+        </div>
+      ) : hasFolders ? (
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[220px_minmax(0,1fr)]">
+          <aside className="hidden xl:block">
+            {videos === null ? (
+              <div className="sticky top-20 space-y-1">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="h-8 animate-pulse rounded-md bg-surface-2" />
+                ))}
+              </div>
+            ) : (
+              <FolderRail
+                items={folderItems}
+                selected={selectedCategory}
+                onSelect={setSelectedCategory}
+                footer={manageFolders}
+              />
+            )}
+          </aside>
+
+          <div className="min-w-0">
+            {videos !== null && (
+              <div className="mb-6 xl:hidden">
+                <FolderChips
+                  items={folderItems}
+                  selected={selectedCategory}
+                  onSelect={setSelectedCategory}
+                  trailing={
+                    userContext.user ? (
+                      <Link
+                        href={`/users/${userContext.user.id}`}
+                        className={buttonStyles({ variant: "ghost", size: "sm" })}
+                      >
+                        Manage folders
+                      </Link>
+                    ) : undefined
+                  }
+                />
+              </div>
+            )}
+            {library}
+          </div>
+        </div>
+      ) : (
+        library
+      )}
     </main>
   );
 }

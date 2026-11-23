@@ -121,6 +121,7 @@ func (r *Routes) FullHandler(handler func(u *models.User, w http.ResponseWriter,
 type RouteVars struct {
 	UID      int64
 	CID      int64
+	CatID    int64
 	Filename string
 }
 
@@ -166,6 +167,17 @@ func (r *Routes) ParseVars(next http.Handler) http.Handler {
 				log.WithError(err).Errorln("Failed to decode cid")
 				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte("Invalid CID"))
+				return
+			}
+		}
+
+		if catid, ok := vars["catid"]; ok {
+			rv.CatID, err = strconv.ParseInt(catid, 10, 64)
+
+			if err != nil {
+				log.WithError(err).Errorln("Failed to parse category id")
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Invalid Category ID"))
 				return
 			}
 		}

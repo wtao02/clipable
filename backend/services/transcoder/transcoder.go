@@ -188,7 +188,7 @@ func (t *transcoder) process(ctx context.Context, clip *models.Clip) {
 		log.WithError(err).
 			WithField("output", string(output)).
 			WithField("command", cmd.String()).
-			Error("Failed to create thumbnail for video, we'd appreciate it if you'd report this issue to us on GitHub with a sample clip that causes the issue: https://github.com/clipable/clipable/issues/new")
+			Error("Failed to create thumbnail for video")
 		return
 	}
 
@@ -207,10 +207,8 @@ func (t *transcoder) process(ctx context.Context, clip *models.Clip) {
 		"-i", rawURL,
 		"-preset", t.cfg.FFmpeg.Preset,
 		"-tune", t.cfg.FFmpeg.Tune,
-		"-keyint_min", strconv.Itoa(fps),
 		"-threads", strconv.Itoa(t.cfg.FFmpeg.Threads),
 		"-hls_playlist_type", "vod",
-		"-g", strconv.Itoa(fps),
 		"-seg_duration", "2",
 		"-sc_threshold", "0",
 		"-c:v", t.cfg.FFmpeg.Codec,
@@ -265,7 +263,7 @@ func (t *transcoder) process(ctx context.Context, clip *models.Clip) {
 		return
 	}
 
-	prog.maxFrames = int(math.Round(duration.Seconds() * 30))
+	prog.maxFrames = int(math.Round(duration.Seconds() * fps))
 
 	output, err = cmd.CombinedOutput()
 
@@ -273,7 +271,7 @@ func (t *transcoder) process(ctx context.Context, clip *models.Clip) {
 		log.WithError(err).
 			WithField("output", string(output)).
 			WithField("args", ffmpegArgs).
-			Error("Failed to transcode video, we'd appreciate it if you'd report this issue to us on GitHub with a sample clip that causes the issue: https://github.com/clipable/clipable/issues/new")
+			Error("Failed to transcode video")
 		return
 	}
 

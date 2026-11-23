@@ -60,7 +60,7 @@ func New(cfg *config.Config, g *services.Group, store sessions.Store) (*Routes, 
 
 	mdlw := middleware.New(middleware.Config{
 		Recorder: metrics.NewRecorder(metrics.Config{
-			ServiceLabel: "clipable",
+			ServiceLabel: "vitryne",
 		}),
 	})
 
@@ -89,9 +89,16 @@ func New(cfg *config.Config, g *services.Group, store sessions.Store) (*Routes, 
 	endpoint("/users/search", r.Handler(r.SearchUsers), http.MethodGet)
 	endpoint("/users/me", r.Handler(r.GetCurrentUser), http.MethodGet)
 	endpoint("/users", r.Handler(r.GetUsers), http.MethodGet)
+	endpoint("/users/{uid:[a-zA-Z0-9-]{4,}}/categories", r.Handler(r.GetUserCategories), http.MethodGet)
 	endpoint("/users/{uid:[a-zA-Z0-9-]{4,}}/clips", r.Handler(r.GetUsersClips), http.MethodGet)
 	endpoint("/users/{uid:[a-zA-Z0-9-]{4,}}", r.Handler(r.GetUser), http.MethodGet)
 	endpoint("/users/{uid:[a-zA-Z0-9-]{4,}}", r.Handler(r.UpdateUser), http.MethodPatch)
+
+	// CATEGORY ENDPOINTS
+	endpoint("/categories", r.Handler(r.GetCategories), http.MethodGet)
+	endpoint("/categories", r.Handler(r.CreateCategory), http.MethodPost)
+	endpoint("/categories/{catid:[0-9]+}", r.Handler(r.UpdateCategory), http.MethodPatch)
+	endpoint("/categories/{catid:[0-9]+}", r.Handler(r.DeleteCategory), http.MethodDelete)
 
 	// CLIP ENDPOINTS
 	endpoint("/clips", r.Handler(r.UploadClip), http.MethodPost)
@@ -136,6 +143,7 @@ func DefaultServiceGroup(cfg *config.Config, sdb *sql.DB, s3 *minio.Client) (*se
 	group := &services.Group{
 		Users:       db.NewUsers(sdb),
 		ObjectStore: object.NewStore(s3, cfg),
+		Categories:  db.NewCategories(sdb),
 	}
 
 	group.Clips = db.NewClips(sdb, group.ObjectStore)

@@ -1,67 +1,78 @@
-<br>
+# Vitryne
 
-<p align="center">
-    <img width="600" src="./.assets/logo.svg" alt="Clipable Icon">
-</p>
+A private, self-hosted video library. Upload a video, it is transcoded into adaptive-quality renditions, and you watch or share it from a clean dark interface.
 
-<br>
+## Features
 
-<h3 align="center">Simple video hosting. &nbsp; For everyone.</h3>
+- **Private by default.** Each account sees only its own clips. The home feed, search, profiles and folders are owner-only. A direct clip link is the only way to share a video with someone else.
+- **Folders.** Create folders, assign a clip at upload or later, and filter by folder on the home library and your profile.
+- **Video files only.** Uploads are checked by content with `ffprobe`. Images, audio, documents and renamed non-video files are rejected before a clip is created.
+- **Adaptive playback.** DASH streaming with Shaka Player. Quality tiers go up to 8K and 240 fps, and only tiers at or below the source are produced.
+- **Your own storage.** Videos live in any S3-compatible bucket (MinIO is bundled); metadata lives in Postgres.
+- **Accounts.** Register users, then turn registration off.
+- **Optional GPU encoding** with NVIDIA NVENC.
 
-<br>
+## Self-hosting
 
-<p align="center">
-    <a href="https://github.com/clipable/clipable"><img src="https://img.shields.io/github/v/release/clipable/clipable?color=%23ff00a0&include_prereleases&label=version&sort=semver&style=flat-square"></a>
-    &nbsp;
-    <a href="https://github.com/clipable/clipable"><img src="https://img.shields.io/badge/built%20with-Go-blue?style=flat-square"></a>
-    &nbsp;
-    <a href="https://github.com/clipable/clipable"><img src="https://img.shields.io/badge/built%20with-Typescript-blue?style=flat-square"></a>
-    &nbsp;
-	<a href="https://github.com/clipable/clipable/actions"><img src="https://img.shields.io/github/actions/workflow/status/clipable/clipable/images.yml?style=flat-square"></a>
-    &nbsp;
-    <a href="https://github.com/clipable/clipable"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/clipable/clipable?style=social"></a>
-</p>
+### Requirements
 
-<br>
+- Docker with the Compose plugin
+- A domain and a reverse proxy for TLS (recommended for anything beyond a local trial)
+- Disk for the database and for every rendition, which is several times the upload size
+- About 2 to 4 CPU cores per concurrent transcode
 
-<h2><img height="20" src="./.assets/icon.png">&nbsp;&nbsp;What is Clipable?</h2>
+### 1. Get the code and secrets
 
-Clipable is a self-hosted video sharing platform that provides an easy and efficient way for individuals and organizations to host, share, and manage their video content. Inspired by popular platforms like Streamable and YouTube, Clipable offers a simple and intuitive user interface that makes it easy for anyone to upload, share, and watch videos with ease. With a focus on privacy and security, Clipable provides an alternative for those looking for a more controlled and self-reliant video hosting solution. Whether you're a content creator, a business owner, or just someone looking to share videos with friends and family, Clipable provides all the features you need to manage your video content with confidence.
+```sh
+git clone <your-repo-url> vitryne
+cd vitryne
+cp .env.example .env
+```
 
-### Live, view-only demo [here](https://clipable.net/).  
+Generate each secret with `openssl rand -hex 32` and fill in `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD`, `DB_IDHASHKEY` and `COOKIE_KEY`. Set `COOKIE_DOMAIN` to the hostname you will browse to, or leave it empty.
 
-View the [features](https://github.com/clipable/clipable/blob/master/README.md#features), the latest [releases](https://github.com/clipable/clipable/releases), the product [roadmap](https://github.com/clipable/clipable/milestones), and [documentation](https://github.com/clipable/clipable/wiki).
+`DB_IDHASHKEY` is permanent: changing it later changes every clip URL and breaks shared links.
 
-<img src="./.assets/preview.png">
+### 2. Start the stack
 
-<h2><img height="20" src="./.assets/icon.png">&nbsp;&nbsp;Contents</h2>
+```sh
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
-- [Features](#features)
-- [Documentation](https://github.com/clipable/clipable/wiki)
-- [Run using Docker](#run-using-docker)
-- [Contributing](#contributing)
+The app listens on `127.0.0.1:8080`. Postgres and MinIO stay on the internal network and are not published.
 
-<h2><img height="20" src="./.assets/icon.png">&nbsp;&nbsp;Features</h2>
+### 3. Put TLS in front
 
-- [x] Responsive, In-Browser upload
-- [x] Configurable video quality profiles
-- [x] S3 compatible video storage
-- [x] User accounts
-- [x] Fuzzy video searching
-- [x] Intuitive and simple user interface
-- [x] Well-documented and accessible REST API
-- [x] FFmpeg based encoding accepts all well known video formats
-- [x] Simple docker based deployment
+Point a reverse proxy at `127.0.0.1:8080` and serve only HTTPS. For uploads, turn off request buffering and raise timeouts. Caddy:
 
-<h2><img height="20" src="./.assets/icon.png">&nbsp;&nbsp;Run using Docker</h2>  
+```caddy
+clips.example.com {
+    request_body {
+        max_size 5GB
+    }
+    reverse_proxy 127.0.0.1:8080 {
+        flush_interval -1
+    }
+}
+```
 
-Getting started is easy with Docker! We have a fully configured [docker-compose.yml](https://github.com/clipable/clipable/blob/master/docker-compose.yml)  
- - Simply copy it and run `docker compose up -d`.  
- - The site will then be accessible at http://localhost/.  
- - You can also view documentation about all of our environment variables [here.](https://github.com/clipable/clipable/wiki/Environment-Variables)
-<h2><img height="20" src="./.assets/icon.png">&nbsp;&nbsp;Contributing</h2>
- TODO
+### 4. Create an account
 
-<h2><img height="20" src="./.assets/icon.png">&nbsp;&nbsp;License</h2>  
+Open the site, register your account, then set `ALLOW_REGISTRATION=false` in `.env` and run the compose command again.
 
-Clipable is licensed under the [BSL 1.1 license](https://github.com/clipable/clipable/blob/master/LICENSE), converting to the open-source GNU General Public License v2.0 or later after 4 years. If you'd like to learn more, you can do so [here](https://mariadb.com/bsl-faq-adopting/).
+For a local trial only, `docker compose up -d --build` uses placeholder passwords and serves on http://localhost:8080. Do not expose that to a network.
+
+### Notes
+
+- **Configuration:** `.env.example` holds the required secrets and host settings. FFmpeg, the database name/user and the S3 connection are set in `docker-compose.prod.yml`.
+- **Tuning:** fewer or lower `FFMPEG_QUALITY_PRESETS` means faster encodes and less storage, for example `640x360-30@1,1280x720-30@5,1920x1080-30@8`.
+- **External S3:** point `S3_ADDRESS`, `S3_ACCESS`, `S3_SECRET` and `S3_BUCKET` at your provider and remove the `minio` and `createbuckets` services.
+- **GPU:** use `gpu.docker-compose.yml` with the NVIDIA Container Toolkit; it encodes with `h264_nvenc`.
+- **Backups:** back up the Postgres database and the `clips` bucket. Both are required to restore a working instance.
+- **Upgrades:** `git pull`, then rebuild with the same compose command. Database migrations run on start; back up first.
+
+## License
+
+Source-available under the [Business Source License 1.1](./LICENSE), converting to GPL v2 or later on 2027-01-01. Third-party licenses are in [`LICENSE-3RD-PARTY.md`](./LICENSE-3RD-PARTY.md).
+
+BSL 1.1 grants non-production use. For production or commercial use before the change date, review the license first.

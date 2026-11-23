@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -11,10 +12,34 @@ import (
 	"strings"
 	"webserver/models"
 	"webserver/modelsx"
+	"webserver/services/transcoder"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
+
+// resolveCategory validates that a requested category exists and belongs to
+// the user. Zero or nil means "no folder".
+func (r *Routes) resolveCategory(ctx context.Context, user *models.User, requested *int64) (null.Int64, int, []byte, error) {
+	if requested == nil || *requested == 0 {
+		return null.Int64{}, 0, nil, nil
+	}
+
+	category, err := r.Categories.Find(ctx, *requested)
+
+	if err == sql.ErrNoRows {
+		return null.Int64{}, http.StatusBadRequest, []byte("Folder not found"), nil
+	} else if err != nil {
+		return null.Int64{}, http.StatusInternalServerError, nil, errors.Wrap(err, "failed to find folder")
+	}
+
+	if category.CreatorID != user.ID {
+		return null.Int64{}, http.StatusForbidden, []byte("Folder belongs to another user"), nil
+	}
+
+	return null.Int64From(category.ID), 0, nil, nil
+}
 
 func (r *Routes) UploadClip(user *models.User, req *http.Request) (int, []byte, error) {
 	if user == nil {
@@ -57,6 +82,16 @@ func (r *Routes) UploadClip(user *models.User, req *http.Request) (int, []byte, 
 		return http.StatusBadRequest, []byte(err.Error()), nil
 	}
 
+	categoryID, code, body, err := r.resolveCategory(req.Context(), user, clip.CategoryID)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if code != 0 {
+		return code, body, nil
+	}
+
 	// Get the second part, which should be the video
 	videoPart, err := mr.NextPart()
 
@@ -74,6 +109,8 @@ func (r *Routes) UploadClip(user *models.User, req *http.Request) (int, []byte, 
 	}
 
 	model := clip.ToModel()
+
+	model.CategoryID = categoryID
 
 	// Create the clip
 	tx, err := r.Clips.Create(req.Context(), model, user, boil.Whitelist(clip.GetUpdateWhitelist()...))
@@ -99,6 +136,15 @@ func (r *Routes) UploadClip(user *models.User, req *http.Request) (int, []byte, 
 		return http.StatusInternalServerError, nil, errors.Wrap(err, "failed to upload video")
 	}
 
+	// Probe the uploaded object by content, not by extension or MIME type.
+	// Anything without a real video stream (images, audio, documents) is
+	// rejected before the transaction commits.
+	rawURL := fmt.Sprintf("http://127.0.0.1:12786/s3/%d/raw", model.ID)
+
+	if err := transcoder.ValidateVideo(rawURL); err != nil {
+		return http.StatusBadRequest, []byte("Only video files are supported"), nil
+	}
+
 	if err := tx.Commit(); err != nil {
 		return http.StatusInternalServerError, nil, errors.Wrap(err, "failed to commit transaction")
 	}
@@ -121,7 +167,15 @@ func (r *Routes) GetClip(user *models.User, req *http.Request) (int, []byte, err
 		return http.StatusInternalServerError, nil, errors.Wrap(err, "failed to get clip")
 	}
 
-	return modelsx.ClipFromModel(clip).Marshal()
+	result := modelsx.ClipFromModel(clip)
+
+	// Folder metadata belongs to the owner; a shared link gets the clip only.
+	if user == nil || clip.CreatorID != user.ID {
+		result.Category = nil
+		result.CategoryID = nil
+	}
+
+	return result.Marshal()
 }
 
 // GetClipProgress returns the progress of a clip, if it's being processed
@@ -153,6 +207,10 @@ func (r *Routes) GetProgress(user *models.User, req *http.Request) (int, []byte,
 }
 
 func (r *Routes) GetClips(user *models.User, req *http.Request) (int, []byte, error) {
+	if user == nil {
+		return http.StatusUnauthorized, []byte("Sign in to see your clips"), nil
+	}
+
 	clips, err := r.Clips.FindMany(
 		req.Context(),
 		user,
@@ -171,6 +229,10 @@ func (r *Routes) GetClips(user *models.User, req *http.Request) (int, []byte, er
 }
 
 func (r *Routes) SearchClips(user *models.User, req *http.Request) (int, []byte, error) {
+	if user == nil {
+		return http.StatusUnauthorized, []byte("Sign in to search your clips"), nil
+	}
+
 	clips, err := r.Clips.SearchMany(req.Context(), user, req.URL.Query().Get("query"))
 
 	if err != nil {
@@ -210,9 +272,20 @@ func (r *Routes) UpdateClip(user *models.User, req *http.Request) (int, []byte, 
 		return http.StatusBadRequest, []byte(err.Error()), nil
 	}
 
+	categoryID, code, body, err := r.resolveCategory(req.Context(), user, clipx.CategoryID)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if code != 0 {
+		return code, body, nil
+	}
+
 	model := clipx.ToModel()
 
 	model.ID = clip.ID
+	model.CategoryID = categoryID
 
 	// Update the clip
 

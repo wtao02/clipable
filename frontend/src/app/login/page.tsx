@@ -1,81 +1,102 @@
 "use client";
 
-import { FormEvent, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { login, registrationAllowed } from "@/shared/api";
 import { UserContext } from "@/context/user-context";
+import { login, registrationAllowed } from "@/shared/api";
+import Alert from "@/shared/alert";
+import PageTitle from "@/shared/page-title";
+import { Button, Field, Input } from "@/shared/ui";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FormEvent, useContext, useEffect, useState } from "react";
 
-export default function Home() {
+export default function Login() {
   const router = useRouter();
   const userContext = useContext(UserContext);
 
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [isRegistrationAllowed, setRegistrationAllowed] = useState<boolean>(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isRegistrationAllowed, setRegistrationAllowed] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const getRegistrationAllowed = async () => {
-      setRegistrationAllowed(await registrationAllowed());
-    };
-    getRegistrationAllowed();
+    registrationAllowed()
+      .then(setRegistrationAllowed)
+      .catch(() => setRegistrationAllowed(false));
   }, []);
 
+  useEffect(() => {
+    if (!userContext.loading && userContext.loggedIn) {
+      router.replace("/");
+    }
+  }, [userContext.loading, userContext.loggedIn, router]);
 
-  const loginUser = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const ok = await login(username, password);
-    if (ok) {
-      userContext.reload();
-      router.push("/");
+  const signIn = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const ok = await login(username, password);
+      if (ok) {
+        userContext.reload();
+        router.push("/");
+        return;
+      }
+
+      setError("That username and password don’t match.");
+    } catch {
+      setError("Couldn’t reach the server. Try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <main className="h-screen">
-      <div className="container mx-auto flex flex-col space-y-6 justify-center items-center py-3">
-        <form className="form-control w-full max-w-xs" onSubmit={loginUser} id="loginForm">
-          <label className="label" htmlFor="username">
-            <span className="label-text">Username</span>
-          </label>
-          <input
-            type="text"
-            placeholder="Username"
+    <main className="mx-auto w-full max-w-[380px] px-4 py-20 sm:py-28">
+      <PageTitle title="Sign in" />
+      <h1 className="text-2xl font-medium tracking-[-0.01em] text-fg">Sign in</h1>
+      <p className="mt-2 text-sm text-muted">Use your Vitryne account to upload and manage clips.</p>
+
+      <form onSubmit={signIn} className="mt-8 space-y-4">
+        <Field label="Username" htmlFor="username">
+          <Input
             id="username"
-            className="input input-bordered w-full max-w-xs"
-            onChange={(e) => {
-              setUsername(e.target.value);
-            }}
+            name="username"
+            autoComplete="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            required
           />
-          <label className="label" htmlFor="password">
-            <span className="label-text">Password</span>
-          </label>
-          <input
-            type="password"
-            placeholder="Password"
+        </Field>
+
+        <Field label="Password" htmlFor="password">
+          <Input
             id="password"
-            className="input input-bordered w-full max-w-xs"
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
           />
-        </form>
+        </Field>
 
-        <button className="btn btn-primary w-full max-w-xs" form="loginForm">
-          Login
-        </button>
+        {error && <Alert type="error" message={error} />}
 
-        {isRegistrationAllowed && (
-          <button
-            className="btn btn-outline w-full max-w-xs"
-            type="button"
-            onClick={() => {
-              router.push("/register");
-            }}
-          >
-            Register
-          </button>
-        )}
-      </div>
+        <Button type="submit" className="w-full" disabled={submitting}>
+          {submitting ? "Signing in…" : "Sign in"}
+        </Button>
+      </form>
+
+      {isRegistrationAllowed && (
+        <p className="mt-6 text-sm text-muted">
+          No account?{" "}
+          <Link href="/register" className="text-fg underline underline-offset-4">
+            Create one
+          </Link>
+        </p>
+      )}
     </main>
   );
 }

@@ -52,6 +52,10 @@ func (r *Routes) UpdateUser(user *models.User, req *http.Request) (int, []byte, 
 //
 // GET /users/search
 func (r *Routes) SearchUsers(user *models.User, req *http.Request) (int, []byte, error) {
+	if user == nil {
+		return http.StatusUnauthorized, nil, nil
+	}
+
 	users, err := r.Users.SearchMany(req.Context(), req.URL.Query().Get("query"))
 
 	if err != nil {
@@ -72,6 +76,10 @@ func (r *Routes) SearchUsers(user *models.User, req *http.Request) (int, []byte,
 // GET /users/{user id}
 func (r *Routes) GetUser(user *models.User, req *http.Request) (int, []byte, error) {
 	vars := vars(req)
+
+	if user == nil || vars.UID != user.ID {
+		return http.StatusNotFound, nil, nil
+	}
 
 	targetUser, err := r.Users.Find(req.Context(), vars.UID)
 
@@ -104,6 +112,10 @@ func (r *Routes) GetCurrentUser(user *models.User, req *http.Request) (int, []by
 func (r *Routes) GetUsersClips(user *models.User, req *http.Request) (int, []byte, error) {
 	vars := vars(req)
 
+	if user == nil || vars.UID != user.ID {
+		return http.StatusNotFound, nil, nil
+	}
+
 	clips, err := r.Clips.FindMany(req.Context(), user, modelsx.NewBuilder().
 		Add(models.ClipWhere.CreatorID.EQ(vars.UID)).
 		Add(getPaginationMods(req, models.ClipColumns.CreatedAt, models.TableNames.Clips, models.ClipColumns.ID)...,
@@ -127,6 +139,10 @@ func (r *Routes) GetUsersClips(user *models.User, req *http.Request) (int, []byt
 //
 // GET /users
 func (r *Routes) GetUsers(user *models.User, req *http.Request) (int, []byte, error) {
+	if user == nil {
+		return http.StatusUnauthorized, nil, nil
+	}
+
 	users, err := r.Users.FindMany(req.Context(), getPaginationMods(req, models.UserColumns.JoinedAt, models.TableNames.User, models.UserColumns.ID)...)
 
 	if err != nil {

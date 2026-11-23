@@ -26,6 +26,7 @@ func NewClips(db *sql.DB, os services.ObjectStore) services.Clips {
 func (c *clips) Find(ctx context.Context, cid int64) (*models.Clip, error) {
 	return models.Clips(
 		qm.Load(models.ClipRels.Creator),
+		qm.Load(models.ClipRels.Category),
 		models.ClipWhere.ID.EQ(cid),
 	).One(ctx, c.db)
 }
@@ -33,17 +34,16 @@ func (c *clips) Find(ctx context.Context, cid int64) (*models.Clip, error) {
 func (c *clips) FindMany(ctx context.Context, user *models.User, mods ...qm.QueryMod) (models.ClipSlice, error) {
 	return models.Clips(modelsx.NewBuilder().
 		Add(mods...).
-		// If there was a user associated with the query, also show them their unlisted clips.
-		// If the user ID is -1, it's the system trying to get all clips and we shouldn't filter anything
+		// Clip libraries are private. A normal user only ever sees their own
+		// clips; the system user (-1) is the transcoder and sees everything.
 		IfCb(user != nil && user.ID != -1, func() []qm.QueryMod {
 			return []qm.QueryMod{
 				models.ClipWhere.CreatorID.EQ(user.ID),
-				qm.Or(models.ClipColumns.Unlisted+"=?", false),
 			}
 		}).
-		// If there was no user, don't show unlisted clips
-		If(user == nil, models.ClipWhere.Unlisted.EQ(false)).
-		Add(qm.Load(models.ClipRels.Creator))...,
+		// No user means no library access.
+		If(user == nil, qm.Where("1 = 0")).
+		Add(qm.Load(models.ClipRels.Creator), qm.Load(models.ClipRels.Category))...,
 	).All(ctx, c.db)
 }
 
@@ -70,17 +70,15 @@ func (c *clips) SearchMany(ctx context.Context, user *models.User, query string)
 			qm.OrderBy(`f_concat_ws(' ', title, "description") <-> ?`, "%"+query+"%"),
 			qm.Limit(10),
 			qm.Load(models.ClipRels.Creator),
+			qm.Load(models.ClipRels.Category),
 		).
-		// If there was a user associated with the query, also show them their unlisted clips.
-		// If the user ID is -1, it's the system trying to get all clips and we shouldn't filter anything
+		// Search is a private library action; only the owner's clips exist here.
 		IfCb(user != nil && user.ID != -1, func() []qm.QueryMod {
 			return []qm.QueryMod{
 				models.ClipWhere.CreatorID.EQ(user.ID),
-				qm.Or(models.ClipColumns.Unlisted+"=?", false),
 			}
 		}).
-		// If there was no user, don't show unlisted clips
-		If(user == nil, models.ClipWhere.Unlisted.EQ(false))...,
+		If(user == nil, qm.Where("1 = 0"))...,
 	).All(ctx, c.db)
 }
 

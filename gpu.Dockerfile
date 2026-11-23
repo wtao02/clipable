@@ -5,19 +5,20 @@ ENV GOOS=linux
 
 WORKDIR /app
 COPY backend/ .
-RUN go build -o clipable
+RUN go build -o vitryne
 
-FROM gplane/pnpm AS frontend-builder
+FROM node:20-alpine AS frontend-builder
+RUN npm install -g pnpm@8
 WORKDIR /home/node/app
 COPY frontend/pnpm-lock.yaml frontend/.npmr[c] ./
 RUN pnpm fetch
 
 COPY frontend/ .
-RUN pnpm install -r --offline
+RUN pnpm install -r --offline --frozen-lockfile
 RUN pnpm build
 
 FROM ghcr.io/aperim/nvidia-cuda-ffmpeg:12.2.2-6.1.1-ubuntu22.04-0.3.6
-WORKDIR /clipable
+WORKDIR /vitryne
 RUN apt update && apt install -y --no-install-recommends curl nginx && \
         curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
         apt install -y nodejs supervisor && \
@@ -38,7 +39,7 @@ COPY --from=frontend-builder /home/node/app/.next/static ./.next/static
 COPY backend/migrations ./migrations
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY gpu.entrypoint.sh .
-COPY --from=backend-build /app/clipable .
+COPY --from=backend-build /app/vitryne .
 COPY ./supervisord.conf /supervisord.conf
 
 ENTRYPOINT ./gpu.entrypoint.sh

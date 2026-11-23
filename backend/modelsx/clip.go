@@ -31,12 +31,20 @@ type Clip struct {
 	Processing  bool        `validate:"-"                  in:"-"           out:"processing"           `
 	Unlisted    null.Bool   `validate:"-"                  in:"unlisted"    out:"unlisted"             `
 	Views       int64       `validate:"-"                  in:"-"           out:"views"                `
+	CategoryID  *int64      `validate:"-"                  in:"category_id" out:"category_id"          `
 
-	Creator *User `validate:"-" in:"-" out:"creator"`
+	Creator  *User     `validate:"-" in:"-" out:"creator"`
+	Category *Category `validate:"-" in:"-" out:"category,omitempty"`
 }
 
 // ToModel converts a modelsx.Clip object to a model.Clip object
 func (u *Clip) ToModel() *models.Clip {
+	var categoryID null.Int64
+
+	if u.CategoryID != nil && *u.CategoryID > 0 {
+		categoryID = null.Int64From(*u.CategoryID)
+	}
+
 	return &models.Clip{
 		ID:          int64(u.ID),
 		Title:       u.Title,
@@ -46,6 +54,7 @@ func (u *Clip) ToModel() *models.Clip {
 		Processing:  u.Processing,
 		Unlisted:    u.Unlisted.Bool,
 		Views:       u.Views,
+		CategoryID:  categoryID,
 	}
 }
 
@@ -81,11 +90,22 @@ func (u *Clip) GetUpdateWhitelist() []string {
 		nonNullFields = append(nonNullFields, models.ClipColumns.Unlisted)
 	}
 
+	if u.CategoryID != nil {
+		nonNullFields = append(nonNullFields, models.ClipColumns.CategoryID)
+	}
+
 	return nonNullFields
 }
 
 // ClipFromModel converts a models.Clip object into a modelsx.Clip object
 func ClipFromModel(u *models.Clip) *Clip {
+	var categoryID *int64
+
+	if u.CategoryID.Valid {
+		id := u.CategoryID.Int64
+		categoryID = &id
+	}
+
 	Clip := &Clip{
 		ID:          HashID(u.ID),
 		Title:       u.Title,
@@ -95,10 +115,12 @@ func ClipFromModel(u *models.Clip) *Clip {
 		Processing:  u.Processing,
 		Unlisted:    null.BoolFrom(u.Unlisted),
 		Views:       u.Views,
+		CategoryID:  categoryID,
 	}
 
 	if u.R != nil {
 		Clip.Creator = UserFromModel(u.R.Creator)
+		Clip.Category = CategoryFromModel(u.R.Category)
 	}
 
 	return Clip

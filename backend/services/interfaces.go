@@ -15,6 +15,7 @@ type Group struct {
 	ObjectStore ObjectStore
 	Users       Users
 	Clips       Clips
+	Categories  Categories
 }
 
 // Users Comment for linter
@@ -59,6 +60,16 @@ type ClipTx interface {
 	UploadVideo(ctx context.Context, r io.Reader) (int64, error)
 	Commit() error
 	Rollback() error
+}
+
+type Categories interface {
+	Find(ctx context.Context, cid int64) (*models.Category, error)
+	FindMany(ctx context.Context, creatorID int64) (models.CategorySlice, error)
+	ExistsName(ctx context.Context, creatorID int64, name string) (bool, error)
+
+	Create(ctx context.Context, category *models.Category) error
+	Update(ctx context.Context, category *models.Category, columns boil.Columns) error
+	Delete(ctx context.Context, category *models.Category) error
 }
 
 type Transcoder interface {

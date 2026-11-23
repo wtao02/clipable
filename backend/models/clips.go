@@ -32,6 +32,7 @@ type Clip struct {
 	CreatedAt   time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	Views       int64       `boil:"views" json:"views" toml:"views" yaml:"views"`
 	Unlisted    bool        `boil:"unlisted" json:"unlisted" toml:"unlisted" yaml:"unlisted"`
+	CategoryID  null.Int64  `boil:"category_id" json:"category_id,omitempty" toml:"category_id" yaml:"category_id,omitempty"`
 
 	R *clipR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L clipL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -46,6 +47,7 @@ var ClipColumns = struct {
 	CreatedAt   string
 	Views       string
 	Unlisted    string
+	CategoryID  string
 }{
 	ID:          "id",
 	Title:       "title",
@@ -55,6 +57,7 @@ var ClipColumns = struct {
 	CreatedAt:   "created_at",
 	Views:       "views",
 	Unlisted:    "unlisted",
+	CategoryID:  "category_id",
 }
 
 var ClipTableColumns = struct {
@@ -66,6 +69,7 @@ var ClipTableColumns = struct {
 	CreatedAt   string
 	Views       string
 	Unlisted    string
+	CategoryID  string
 }{
 	ID:          "clips.id",
 	Title:       "clips.title",
@@ -75,55 +79,10 @@ var ClipTableColumns = struct {
 	CreatedAt:   "clips.created_at",
 	Views:       "clips.views",
 	Unlisted:    "clips.unlisted",
+	CategoryID:  "clips.category_id",
 }
 
 // Generated where
-
-type whereHelperint64 struct{ field string }
-
-func (w whereHelperint64) EQ(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint64) NEQ(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint64) LT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint64) LTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint64) GT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint64) GTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint64) IN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-type whereHelperstring struct{ field string }
-
-func (w whereHelperstring) EQ(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperstring) NEQ(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperstring) LT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperstring) LTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperstring) GT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperstring) GTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperstring) IN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
 
 type whereHelpernull_String struct{ field string }
 
@@ -172,26 +131,43 @@ func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field
 func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
 func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
-type whereHelpertime_Time struct{ field string }
+type whereHelpernull_Int64 struct{ field string }
 
-func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
+func (w whereHelpernull_Int64) EQ(x null.Int64) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
 }
-func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+func (w whereHelpernull_Int64) NEQ(x null.Int64) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
 }
-func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Int64) LT(x null.Int64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Int64) LTE(x null.Int64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Int64) GT(x null.Int64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Int64) GTE(x null.Int64) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
+func (w whereHelpernull_Int64) IN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int64) NIN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int64) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int64) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var ClipWhere = struct {
 	ID          whereHelperint64
@@ -202,6 +178,7 @@ var ClipWhere = struct {
 	CreatedAt   whereHelpertime_Time
 	Views       whereHelperint64
 	Unlisted    whereHelperbool
+	CategoryID  whereHelpernull_Int64
 }{
 	ID:          whereHelperint64{field: "\"clips\".\"id\""},
 	Title:       whereHelperstring{field: "\"clips\".\"title\""},
@@ -211,23 +188,34 @@ var ClipWhere = struct {
 	CreatedAt:   whereHelpertime_Time{field: "\"clips\".\"created_at\""},
 	Views:       whereHelperint64{field: "\"clips\".\"views\""},
 	Unlisted:    whereHelperbool{field: "\"clips\".\"unlisted\""},
+	CategoryID:  whereHelpernull_Int64{field: "\"clips\".\"category_id\""},
 }
 
 // ClipRels is where relationship names are stored.
 var ClipRels = struct {
-	Creator string
+	Category string
+	Creator  string
 }{
-	Creator: "Creator",
+	Category: "Category",
+	Creator:  "Creator",
 }
 
 // clipR is where relationships are stored.
 type clipR struct {
-	Creator *User `boil:"Creator" json:"Creator" toml:"Creator" yaml:"Creator"`
+	Category *Category `boil:"Category" json:"Category" toml:"Category" yaml:"Category"`
+	Creator  *User     `boil:"Creator" json:"Creator" toml:"Creator" yaml:"Creator"`
 }
 
 // NewStruct creates a new relationship struct
 func (*clipR) NewStruct() *clipR {
 	return &clipR{}
+}
+
+func (r *clipR) GetCategory() *Category {
+	if r == nil {
+		return nil
+	}
+	return r.Category
 }
 
 func (r *clipR) GetCreator() *User {
@@ -241,9 +229,9 @@ func (r *clipR) GetCreator() *User {
 type clipL struct{}
 
 var (
-	clipAllColumns            = []string{"id", "title", "description", "creator_id", "processing", "created_at", "views", "unlisted"}
+	clipAllColumns            = []string{"id", "title", "description", "creator_id", "processing", "created_at", "views", "unlisted", "category_id"}
 	clipColumnsWithoutDefault = []string{"title", "creator_id"}
-	clipColumnsWithDefault    = []string{"id", "description", "processing", "created_at", "views", "unlisted"}
+	clipColumnsWithDefault    = []string{"id", "description", "processing", "created_at", "views", "unlisted", "category_id"}
 	clipPrimaryKeyColumns     = []string{"id"}
 	clipGeneratedColumns      = []string{}
 )
@@ -546,6 +534,17 @@ func (q clipQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
+// Category pointed to by the foreign key.
+func (o *Clip) Category(mods ...qm.QueryMod) categoryQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.CategoryID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Categories(queryMods...)
+}
+
 // Creator pointed to by the foreign key.
 func (o *Clip) Creator(mods ...qm.QueryMod) userQuery {
 	queryMods := []qm.QueryMod{
@@ -555,6 +554,130 @@ func (o *Clip) Creator(mods ...qm.QueryMod) userQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Users(queryMods...)
+}
+
+// LoadCategory allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (clipL) LoadCategory(ctx context.Context, e boil.ContextExecutor, singular bool, maybeClip interface{}, mods queries.Applicator) error {
+	var slice []*Clip
+	var object *Clip
+
+	if singular {
+		var ok bool
+		object, ok = maybeClip.(*Clip)
+		if !ok {
+			object = new(Clip)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeClip)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeClip))
+			}
+		}
+	} else {
+		s, ok := maybeClip.(*[]*Clip)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeClip)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeClip))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &clipR{}
+		}
+		if !queries.IsNil(object.CategoryID) {
+			args = append(args, object.CategoryID)
+		}
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &clipR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.CategoryID) {
+					continue Outer
+				}
+			}
+
+			if !queries.IsNil(obj.CategoryID) {
+				args = append(args, obj.CategoryID)
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`categories`),
+		qm.WhereIn(`categories.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Category")
+	}
+
+	var resultSlice []*Category
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Category")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for categories")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for categories")
+	}
+
+	if len(categoryAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Category = foreign
+		if foreign.R == nil {
+			foreign.R = &categoryR{}
+		}
+		foreign.R.Clips = append(foreign.R.Clips, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.CategoryID, foreign.ID) {
+				local.R.Category = foreign
+				if foreign.R == nil {
+					foreign.R = &categoryR{}
+				}
+				foreign.R.Clips = append(foreign.R.Clips, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadCreator allows an eager lookup of values, cached into the
@@ -674,6 +797,102 @@ func (clipL) LoadCreator(ctx context.Context, e boil.ContextExecutor, singular b
 		}
 	}
 
+	return nil
+}
+
+// SetCategoryG of the clip to the related item.
+// Sets o.R.Category to related.
+// Adds o to related.R.Clips.
+// Uses the global database handle.
+func (o *Clip) SetCategoryG(ctx context.Context, insert bool, related *Category) error {
+	return o.SetCategory(ctx, boil.GetContextDB(), insert, related)
+}
+
+// SetCategory of the clip to the related item.
+// Sets o.R.Category to related.
+// Adds o to related.R.Clips.
+func (o *Clip) SetCategory(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Category) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"clips\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"category_id"}),
+		strmangle.WhereClause("\"", "\"", 2, clipPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.CategoryID, related.ID)
+	if o.R == nil {
+		o.R = &clipR{
+			Category: related,
+		}
+	} else {
+		o.R.Category = related
+	}
+
+	if related.R == nil {
+		related.R = &categoryR{
+			Clips: ClipSlice{o},
+		}
+	} else {
+		related.R.Clips = append(related.R.Clips, o)
+	}
+
+	return nil
+}
+
+// RemoveCategoryG relationship.
+// Sets o.R.Category to nil.
+// Removes o from all passed in related items' relationships struct.
+// Uses the global database handle.
+func (o *Clip) RemoveCategoryG(ctx context.Context, related *Category) error {
+	return o.RemoveCategory(ctx, boil.GetContextDB(), related)
+}
+
+// RemoveCategory relationship.
+// Sets o.R.Category to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Clip) RemoveCategory(ctx context.Context, exec boil.ContextExecutor, related *Category) error {
+	var err error
+
+	queries.SetScanner(&o.CategoryID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("category_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Category = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.Clips {
+		if queries.Equal(o.CategoryID, ri.CategoryID) {
+			continue
+		}
+
+		ln := len(related.R.Clips)
+		if ln > 1 && i < ln-1 {
+			related.R.Clips[i] = related.R.Clips[ln-1]
+		}
+		related.R.Clips = related.R.Clips[:ln-1]
+		break
+	}
 	return nil
 }
 

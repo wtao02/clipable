@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import{useSpring, animated}from"react-spring";
 import { Clip } from "@/shared/api";
+import { Progress } from "./ui";
 
 interface Props {
   video: Clip;
@@ -10,42 +9,31 @@ interface Props {
 }
 
 /**
- * Renders the thumbnail of a video or the progress of the video if it is being processed
+ * Renders the thumbnail of a clip, or its processing progress.
  */
 export default function ClipCardImage({ progress, video }: Props) {
-
-  const [oldVal, setOldVal] = useState<number>(0);
-
-  const barvalue = useSpring({
-    from: { "--value": oldVal },
-    config: { duration: 1000 },
-    to: { "--value": progress ?? oldVal },
-  });
-
-  useEffect(() => {
-    if (progress) {
-      setOldVal(progress);
-    }
-  }, [progress]);
-
   if (!video.processing) {
-    return <img src={`/api/clips/${video.id}/thumbnail.jpg`} />
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/api/clips/${video.id}/thumbnail.jpg`}
+        alt=""
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    );
   }
 
-  if (progress === -1) {
-    return <div style={{ userSelect: "none" }}>Queued</div>
-  }
+  const value = typeof progress === "number" && progress > 0 ? Math.min(100, progress) : 0;
+  const queued = progress === undefined || progress < 0;
 
-  if (progress === undefined) {
-    return <div style={{ userSelect: "none" }}>Loading...</div>
-  }
-
-  // @TODO: Since we have a thumbnail here we can maybe add some opacity to it and show the progress on top of it
   return (
-    <animated.div  className="radial-progress select-none" style={barvalue as any}>
-      {barvalue["--value"].to((p) => {
-        return p.toFixed(0) + "%"
-      })}
-      </animated.div>
-  )
+    <div className="flex h-full w-full flex-col justify-end bg-surface-2 p-3">
+      <div className="mb-2 flex items-baseline justify-between font-mono text-[11px] uppercase tracking-wider text-muted">
+        <span>{queued ? "Queued" : "Processing"}</span>
+        {!queued && <span>{Math.round(value)}%</span>}
+      </div>
+      <Progress value={value} label="Processing progress" />
+    </div>
+  );
 }

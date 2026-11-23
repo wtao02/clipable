@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-20T20:35:00Z",
+  "title": "Design System: Vitryne",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "House Black",
+        "canonical": "#0b0b0c",
+        "tonalRamp": [
+          "#252528",
+          "#3f3f45",
+          "#5a5a62",
+          "#757580",
+          "#92929b",
+          "#afafb6",
+          "#cfcfd3",
+          "#efeff0"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Booth Surface",
+        "canonical": "#141416",
+        "tonalRamp": [
+          "#242428",
+          "#3f3f45",
+          "#5a5a63",
+          "#757580",
+          "#91919b",
+          "#afafb6",
+          "#cfcfd3",
+          "#efeff0"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Booth",
+        "canonical": "#1a1a1d",
+        "tonalRamp": [
+          "#242428",
+          "#3f3f46",
+          "#595963",
+          "#747481",
+          "#91919c",
+          "#aeaeb7",
+          "#cfcfd4",
+          "#efeff1"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#26262a",
+        "tonalRamp": [
+          "#242428",
+          "#3f3f46",
+          "#5a5a63",
+          "#747481",
+          "#91919c",
+          "#afafb6",
+          "#cfcfd3",
+          "#efeff0"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "#3a3a40",
+        "tonalRamp": [
+          "#242428",
+          "#3f3f46",
+          "#5a5a63",
+          "#747480",
+          "#91919c",
+          "#afafb6",
+          "#cfcfd3",
+          "#efeff0"
+        ]
+      },
+      "paper": {
+        "role": "primary",
+        "displayName": "Projector White",
+        "canonical": "#f4f2ec",
+        "tonalRamp": [
+          "#302b1c",
+          "#544b31",
+          "#786b45",
+          "#9b8b5a",
+          "#b2a47b",
+          "#c7bd9e",
+          "#ddd7c5",
+          "#f4f2ec"
+        ]
+      },
+      "dust": {
+        "role": "neutral",
+        "displayName": "Dust",
+        "canonical": "#a3a3ab",
+        "tonalRamp": [
+          "#252528",
+          "#3f3f45",
+          "#5a5a63",
+          "#757580",
+          "#92929b",
+          "#afafb6",
+          "#cfcfd3",
+          "#efeff0"
+        ]
+      },
+      "dust-dim": {
+        "role": "neutral",
+        "displayName": "Dust Dim",
+        "canonical": "#82828b",
+        "tonalRamp": [
+          "#252528",
+          "#404045",
+          "#5b5b62",
+          "#76767f",
+          "#93939a",
+          "#b0b0b5",
+          "#cfcfd3",
+          "#efeff0"
+        ]
+      },
+      "cue-red": {
+        "role": "tertiary",
+        "displayName": "Cue Red",
+        "canonical": "#ff6b6b",
+        "tonalRamp": [
+          "#341919",
+          "#5a2b2b",
+          "#7f3d3d",
+          "#a55050",
+          "#bb7272",
+          "#cd9898",
+          "#e1c1c1",
+          "#f5eaea"
+        ]
+      },
+      "cue-green": {
+        "role": "tertiary",
+        "displayName": "Cue Green",
+        "canonical": "#6ee7a8",
+        "tonalRamp": [
+          "#193426",
+          "#2b5a41",
+          "#3d7f5d",
+          "#50a579",
+          "#72bb95",
+          "#98cdb1",
+          "#c1e1d0",
+          "#eaf5ef"
+        ]
+      },
+      "cue-amber": {
+        "role": "tertiary",
+        "displayName": "Cue Amber",
+        "canonical": "#f5b84d",
+        "tonalRamp": [
+          "#342a19",
+          "#5a492b",
+          "#7f673d",
+          "#a58650",
+          "#bba072",
+          "#cdba98",
+          "#e1d5c1",
+          "#f5f1ea"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles: Clips, Search, Upload a clip, auth headings."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Clip title on the watch page."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles and modal titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions and supporting copy, under 68ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form labels, button labels, helper copy."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Counts, dates, percentages, status and badges; never prose."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state",
+        "value": "120ms ease-out",
+        "purpose": "Hover and focus color transitions on controls."
+      },
+      {
+        "name": "fade",
+        "value": "200ms ease-out",
+        "purpose": "Play-on-hover overlay and border changes."
+      },
+      {
+        "name": "progress",
+        "value": "300ms ease-out",
+        "purpose": "Progress fill width."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single cream action on a view: Sign in, Upload, Save, or the empty-state CTA.",
+      "html": "<button class=\"ds-btn-primary\">Upload clip</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;border:0;border-radius:6px;background:var(--fg);color:var(--bg);font-family:Archivo,ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:500;line-height:1;white-space:nowrap;cursor:pointer;transition:background .12s ease-out}.ds-btn-primary:hover{background:#fff}.ds-btn-primary:focus-visible{outline:2px solid rgba(244,242,236,.6);outline-offset:2px}.ds-btn-primary:disabled{opacity:.5;pointer-events:none}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "In-flow actions such as Upload, Copy link, Choose file, Cancel, and retry.",
+      "html": "<button class=\"ds-btn-secondary\">Copy link</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg);font-family:Archivo,ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;cursor:pointer;transition:background .12s ease-out,border-color .12s ease-out}.ds-btn-secondary:hover{background:var(--surface-2);border-color:var(--border-strong)}.ds-btn-secondary:focus-visible{outline:2px solid rgba(244,242,236,.6);outline-offset:2px}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Quiet account and icon actions with no resting border.",
+      "html": "<button class=\"ds-btn-ghost\" aria-label=\"Edit clip\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z\"/></svg></button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--muted);font-family:Archivo,ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:background .12s ease-out,color .12s ease-out}.ds-btn-ghost:hover{background:var(--surface-2);color:var(--fg)}.ds-btn-ghost:focus-visible{outline:2px solid rgba(244,242,236,.6);outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Raised Booth field with a Hairline Strong border; labels sit above at 13px.",
+      "html": "<label class=\"ds-field\"><span>Username</span><input class=\"ds-input\" placeholder=\"Username\" /></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font-family:Archivo,ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;color:var(--fg)}.ds-input{height:40px;width:100%;padding:0 12px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface-2);color:var(--fg);font-family:inherit;font-size:14px;font-weight:400;outline:none;transition:border-color .12s ease-out}.ds-input::placeholder{color:var(--muted-2)}.ds-input:hover{border-color:var(--muted-2)}.ds-input:focus{border-color:rgba(244,242,236,.4);outline:2px solid rgba(244,242,236,.6);outline-offset:2px}"
+    },
+    {
+      "name": "Header / Navigation",
+      "kind": "nav",
+      "description": "64px sticky bar: play-mark wordmark, Browse, 320px search, Upload, account; two rows below 640px.",
+      "html": "<header class=\"ds-header\"><a class=\"ds-wordmark\" href=\"#\"><span class=\"ds-mark\"><svg viewBox=\"0 0 12 12\" width=\"12\" height=\"12\" aria-hidden=\"true\"><path d=\"M3 1.5 10 6 3 10.5Z\" fill=\"currentColor\"/></svg></span>Vitryne</a><nav class=\"ds-nav\"><a href=\"#\">Browse</a></nav><div class=\"ds-search\">Search clips</div><div class=\"ds-account\"><button class=\"ds-btn-primary ds-small\">Sign in</button></div></header>",
+      "css": ".ds-header{display:flex;align-items:center;gap:24px;height:64px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg);font-family:Archivo,ui-sans-serif,system-ui,sans-serif}.ds-wordmark{display:flex;align-items:center;gap:8px;color:var(--fg);font-size:15px;font-weight:600;letter-spacing:-.02em;text-decoration:none}.ds-mark{display:grid;place-items:center;width:24px;height:24px;border:1px solid var(--border-strong);border-radius:5px;color:var(--fg)}.ds-nav{display:flex;gap:20px;font-size:13px}.ds-nav a{color:var(--muted);text-decoration:none}.ds-nav a:hover{color:var(--fg)}.ds-search{flex:1;max-width:320px;margin-left:auto;height:36px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--muted-2);font-size:13px}.ds-account{display:flex;gap:8px}.ds-small{height:32px;font-size:13px;padding:0 12px}"
+    },
+    {
+      "name": "Clip Card",
+      "kind": "card",
+      "refersTo": "clip-card",
+      "description": "16:9 thumbnail on an 8px surface, title and mono metadata below; no card fill around the text.",
+      "html": "<a class=\"ds-card\" href=\"#\"><span class=\"ds-card-media\"><span class=\"ds-play\"><svg viewBox=\"0 0 12 12\" width=\"12\" height=\"12\" aria-hidden=\"true\"><path d=\"M3 1.5 10 6 3 10.5Z\" fill=\"currentColor\"/></svg></span></span><span class=\"ds-card-title\">1440p240 test</span><span class=\"ds-card-meta\">tester · 24 views · 6 hours ago</span></a>",
+      "css": ".ds-card{display:block;color:var(--fg);text-decoration:none;font-family:Archivo,ui-sans-serif,system-ui,sans-serif}.ds-card-media{position:relative;display:grid;place-items:center;aspect-ratio:16/9;border:1px solid var(--border);border-radius:8px;background:#000}.ds-play{display:grid;place-items:center;width:40px;height:40px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(0,0,0,.7);color:var(--fg);opacity:0;transition:opacity .2s ease-out}.ds-card:hover .ds-play{opacity:1}.ds-card-title{display:block;margin-top:12px;font-size:15px;font-weight:500;line-height:1.6}.ds-card-meta{display:block;margin-top:4px;color:var(--muted);font-family:\"IBM Plex Mono\",ui-monospace,monospace;font-size:12px;line-height:1.5}"
+    },
+    {
+      "name": "Modal",
+      "kind": "custom",
+      "refersTo": "modal",
+      "description": "Portaled 448px panel on a 70% backdrop; app shell inert, focus trapped, Escape restores the trigger.",
+      "html": "<div class=\"ds-backdrop\"><div class=\"ds-modal\" role=\"dialog\" aria-modal=\"true\"><h2>Edit clip</h2><p>Title and description fields live here.</p><div class=\"ds-actions\"><button class=\"ds-btn-secondary\">Cancel</button><button class=\"ds-btn-primary\">Save changes</button></div></div></div>",
+      "css": ".ds-backdrop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.7)}.ds-modal{width:100%;max-width:448px;padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-family:Archivo,ui-sans-serif,system-ui,sans-serif}.ds-modal h2{margin:0;font-size:16px;font-weight:500}.ds-modal p{margin:16px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.ds-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.ds-btn-primary,.ds-btn-secondary{font-family:inherit;cursor:pointer}.ds-btn-primary{height:32px;padding:0 12px;border:0;border-radius:6px;background:var(--fg);color:var(--bg);font-size:13px;font-weight:500}.ds-btn-secondary{height:32px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg);font-size:13px;font-weight:500}"
+    },
+    {
+      "name": "Progress Bar",
+      "kind": "custom",
+      "description": "6px pill track in Raised Booth with a Projector White fill; upload, queued and encoding states.",
+      "html": "<div class=\"ds-progress\" role=\"progressbar\" aria-valuenow=\"38\" aria-valuemin=\"0\" aria-valuemax=\"100\"><span style=\"width:38%\"></span></div>",
+      "css": ".ds-progress{width:100%;height:6px;overflow:hidden;border-radius:999px;background:var(--surface-2)}.ds-progress span{display:block;height:100%;border-radius:999px;background:var(--fg);transition:width .3s ease-out}"
+    },
+    {
+      "name": "Unlisted Badge",
+      "kind": "chip",
+      "description": "Small mono badge over a thumbnail; the only chip in the system.",
+      "html": "<span class=\"ds-badge\">Unlisted</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;padding:2px 6px;border:1px solid var(--border-strong);border-radius:4px;background:rgba(11,11,12,.85);color:var(--muted);font-family:\"IBM Plex Mono\",ui-monospace,monospace;font-size:10px;line-height:1.4;text-transform:uppercase;letter-spacing:.08em}"
+    },
+    {
+      "name": "Folder Chip",
+      "kind": "chip",
+      "description": "Profile filter chip with a mono count; one wrapping row above the clip grid.",
+      "html": "<button class=\"ds-folder-chip is-active\" aria-pressed=\"true\">Games <span>3</span></button>",
+      "css": ".ds-folder-chip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);font-family:Archivo,ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:background .12s ease-out,border-color .12s ease-out,color .12s ease-out}.ds-folder-chip span{color:var(--muted-2);font-family:\"IBM Plex Mono\",ui-monospace,monospace;font-size:11px}.ds-folder-chip:hover{border-color:var(--border-strong);color:var(--fg)}.ds-folder-chip.is-active{border-color:rgba(244,242,236,.4);background:var(--surface-2);color:var(--fg)}.ds-folder-chip.is-active span{color:var(--muted)}"
+    },
+    {
+      "name": "Folder Rail",
+      "kind": "nav",
+      "description": "Sticky 220px folder navigation on wide profiles; collapses to chips below xl.",
+      "html": "<nav class=\"ds-folder-rail\" aria-label=\"Folders\"><p>Folders</p><button class=\"ds-folder-row is-active\" aria-pressed=\"true\">All clips <span>5</span></button><button class=\"ds-folder-row\">Racing <span>1</span></button><button class=\"ds-folder-row\">Tech <span>1</span></button><button class=\"ds-folder-row ds-folder-new\">New folder</button></nav>",
+      "css": ".ds-folder-rail{width:220px;font-family:Archivo,ui-sans-serif,system-ui,sans-serif;font-size:13px}.ds-folder-rail p{margin:0 0 8px;padding:0 12px;color:var(--muted-2);font-size:12px}.ds-folder-row{display:flex;width:100%;height:32px;align-items:center;justify-content:space-between;gap:12px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:inherit;text-align:left;cursor:pointer;transition:background .12s ease-out,color .12s ease-out}.ds-folder-row:hover{background:var(--surface-2);color:var(--fg)}.ds-folder-row.is-active{background:var(--surface-2);color:var(--fg)}.ds-folder-row span{color:var(--muted-2);font-family:\"IBM Plex Mono\",ui-monospace,monospace;font-size:11px}.ds-folder-new{margin-top:8px;justify-content:flex-start}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Screening Room",
+    "overview": "Vitryne is a dark room where the clip is the only bright thing. The shell stays near-black and deliberately unremarkable; thumbnails, posters and video frames carry the color. Chrome is built from warm paper-white type, hairline rules and flat surfaces, never from ornament. The visitor should feel the product recede the moment playback starts.\n\nThe voice is calm, exact and unadorned. Every label names what it does, every number is set in mono where it reads as data, and every primary action is a single cream shape on the dark ground. There are no gradients, glass panels, shadows or decorative accents. Separation comes from a 1px hairline and one step of surface value.\n\nThe world is sized for a small self-hosted instance, not a content network: a compact 1200px page, a three-column clip wall, a 1024px watch page, and narrow 380–640px forms. Future editing surfaces inherit the same quiet shell; they should add capability, not a second visual language.",
+    "keyCharacteristics": [
+      "Warm near-black ground with a paper-white primary.",
+      "Flat surfaces and 1px hairlines; no shadows at rest.",
+      "Archivo for voice, IBM Plex Mono for data and state.",
+      "Clips own the color; the interface stays neutral.",
+      "8px surfaces, 6px controls, 5px wordmark mark."
+    ],
+    "rules": [
+      {
+        "name": "The One Light Rule",
+        "body": "The clip image is the only saturated field in the product. Do not add a hue accent to navigation, panels, or headings to compensate.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cue Rule",
+        "body": "Red, green and amber appear only when they carry meaning. They are never decorative, never a second brand color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Data Voice Rule",
+        "body": "Mono is for counts, dates, status and measurements. It is never used for prose, headings or navigation.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest. If a shadow ever appears, it must describe a state or a physical layer, not decorate a card.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep exactly one Projector White primary action per view.",
+      "Do use a 1px Hairline for separation and an 8px radius for surfaces.",
+      "Do set counts, dates, percentages and status in IBM Plex Mono.",
+      "Do let the clip image carry all of the color; keep chrome neutral.",
+      "Do use sentence case for headings, buttons and labels.",
+      "Do keep folder navigation in a 220px sticky rail at xl, collapsing to one wrapping chip row below xl, with counts in mono.",
+      "Do treat the shared clip page as the only public surface; libraries, profiles, folders and feeds stay owner-only.",
+      "Do extend this shell to future editing surfaces rather than inventing an editor skin."
+    ],
+    "donts": [
+      "Don't add hue accents, gradients, glass, blur or decorative shadows.",
+      "Don't use pill-shaped cards, nested cards or cards inside cards.",
+      "Don't use a display serif or a system display face for headings.",
+      "Don't use mono for prose or navigation.",
+      "Don't use kickers, eyebrows or section numbers above headings.",
+      "Don't rely on color alone for destructive, success or warning meaning."
+    ]
+  }
+}

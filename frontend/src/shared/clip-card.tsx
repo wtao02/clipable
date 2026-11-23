@@ -1,10 +1,10 @@
 "use client";
 
-import clsx from "clsx";
 import { Clip } from "@/shared/api";
-import { formatViewsCount } from "./views-formatter";
 import { formatDate } from "./date-formatter";
+import { formatViewsCount } from "./views-formatter";
 import ClipCardImage from "./clip-card-image";
+import { PlayIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 interface Props {
@@ -13,50 +13,61 @@ interface Props {
 }
 
 export default function ClipCard({ video, progress }: Props) {
-  const figureClassname = clsx({
-    "flex-auto grow self-center pt-8 glass w-full h-full": video.processing,
-  });
-
-  const cardBodyClassname = clsx({
-    "card-body justify-end": video.processing,
-    "card-body": !video.processing,
-  });
-
+  const href = `/clips/${video.id}`;
   return (
-    <div className="card card-compact w-96 h-full bg-base-100 min-w-[28rem] min-h-[20rem]">
-      <figure className={figureClassname}>
-        <ClipCardImage video={video} progress={progress} />
-      </figure>
-      <div
-        className={cardBodyClassname}
-        style={{
-          padding: 0,
-        }}
-      >
-        <div className="flex flex-col text-xl">
-          <div
-            className="truncate card-title"
-            style={{
-              marginBottom: "0.1rem",
-            }}
-          >
-            {video.title}
-          </div>
-          <Link href={`/users/${video.creator.id}`}>
-            <div className="truncate text-stone-400 text-base font-thin hover:text-stone-200">
-              {video.creator.username}
-            </div>
+    <article className="group min-w-0">
+      <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-surface">
+        {video.processing ? (
+          <ClipCardImage video={video} progress={progress} />
+        ) : (
+          <Link href={href} className="block h-full w-full" aria-label={`Play ${video.title}`}>
+            <ClipCardImage video={video} />
+            <span className="pointer-events-none absolute inset-0 grid place-items-center bg-bg/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <span className="grid h-10 w-10 place-items-center rounded-full border border-white/20 bg-bg/70 text-fg">
+                <PlayIcon aria-hidden="true" className="ml-0.5 h-4 w-4" />
+              </span>
+            </span>
           </Link>
-          <div className="flex flex-row w-fit space-x-2 text-gray-400 text-base font-thin items-baseline">
-            <p>
-              {formatViewsCount(video.views)} view{video.views === 1 ? "" : "s"}
-            </p>
-            <p className="text-sm">•</p>
-            <p>{formatDate(video.created_at)}</p>
-          </div>
-          {video.unlisted && <div className="badge badge-outline mt-1">unlisted</div>}
+        )}
+      </div>
+
+      <div className="mt-3 min-w-0">
+        <h3 className="line-clamp-2 text-[15px] font-medium leading-6 text-fg">
+          {video.processing ? (
+            video.title
+          ) : (
+            <Link href={href} className="underline-offset-4 hover:underline">
+              {video.title}
+            </Link>
+          )}
+        </h3>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+          <Link
+            href={`/users/${video.creator.id}`}
+            className="max-w-[14rem] truncate transition-colors hover:text-fg"
+          >
+            {video.creator.username}
+          </Link>
+          <span aria-hidden="true" className="text-muted-2">
+            ·
+          </span>
+          <span className="font-mono text-[11px]">
+            {formatViewsCount(video.views)} view{video.views === 1 ? "" : "s"}
+          </span>
+          <span aria-hidden="true" className="text-muted-2">
+            ·
+          </span>
+          <span className="font-mono text-[11px]">{formatDate(video.created_at)}</span>
+          {video.category && (
+            <>
+              <span aria-hidden="true" className="text-muted-2">
+                ·
+              </span>
+              <span className="max-w-[9rem] truncate text-muted-2">{video.category.name}</span>
+            </>
+          )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

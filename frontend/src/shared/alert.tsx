@@ -7,20 +7,19 @@ interface Props {
   message: string;
 }
 
-export default function Alert({ type, message }: Props) {
-  const className = clsx({
-    alert: true,
-    "alert-info": type === "info",
-    "alert-success": type === "success",
-    "alert-error": type === "error",
-    "shadow-lg": true,
-  });
+const tones = {
+  info: "border-border bg-surface text-muted",
+  success: "border-success/30 bg-success/5 text-success",
+  error: "border-danger/30 bg-danger/5 text-danger",
+};
 
+export default function Alert({ type, message }: Props) {
   return (
-    <div className={className}>
-      <div>
-        <span>{message}</span>
-      </div>
+    <div
+      role={type === "error" ? "alert" : "status"}
+      className={clsx("rounded-md border px-3 py-2 text-[13px]", tones[type])}
+    >
+      {message}
     </div>
   );
 }
