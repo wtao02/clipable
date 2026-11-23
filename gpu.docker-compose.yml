@@ -42,7 +42,7 @@ services:
     build:
       context: .
       dockerfile: gpu.Dockerfile
-    image: vitryne:gpu
+    image: ${VITRYNE_IMAGE:-vitryne:gpu}
     # Configuration reference: README.md or .env.example
     environment:
       MAX_UPLOAD_SIZE: 5GB

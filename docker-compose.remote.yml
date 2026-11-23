@@ -1,0 +1,81 @@
+# Runs published images instead of building from source.
+#   docker compose -f docker-compose.remote.yml pull
+#   docker compose -f docker-compose.remote.yml up -d
+#
+# Override the tag with VITRYNE_IMAGE, for example:
+#   VITRYNE_IMAGE=ghcr.io/wtao02/vitryne:v0.1.0 docker compose -f docker-compose.remote.yml up -d
+#
+# For a private package, log in first: docker login ghcr.io -u <user>
+services:
+  postgres:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: elestio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vitryne}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+
+  createbuckets:
+    image: bitnamilegacy/minio-client:latest
+    depends_on:
+      - minio
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      until /opt/bitnami/minio-client/bin/mc alias set vitryne http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 1; done;
+      /opt/bitnami/minio-client/bin/mc mb -p vitryne/clips;
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vitryne}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+  vitryne:
+    image: ${VITRYNE_IMAGE:-ghcr.io/wtao02/vitryne:latest}
+    restart: unless-stopped
+    environment:
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-5GB}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      FFMPEG_CONCURRENCY: 1
+      FFMPEG_THREADS: 0
+      FFMPEG_PRESET: medium
+      FFMPEG_TUNE: film
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: postgres
+      DB_IDHASHKEY: ${DB_IDHASHKEY:?set DB_IDHASHKEY}
+      COOKIE_KEY: ${COOKIE_KEY:?set COOKIE_KEY}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      S3_BUCKET: clips
+      S3_ACCESS: ${MINIO_ROOT_USER:-vitryne}
+      S3_SECRET: ${MINIO_ROOT_PASSWORD}
+      S3_ADDRESS: minio:9000
+      S3_SECURE: "false"
+    ports:
+      - "${HTTP_BIND:-127.0.0.1:8080}:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+
+volumes:
+  pg_data: {}
+  minio_data: {}

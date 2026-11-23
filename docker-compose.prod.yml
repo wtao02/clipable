@@ -43,7 +43,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: vitryne:local
+    image: ${VITRYNE_IMAGE:-vitryne:local}
     restart: unless-stopped
     environment:
       MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-5GB}

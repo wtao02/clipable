@@ -62,6 +62,25 @@ Open the site, register your account, then set `ALLOW_REGISTRATION=false` in `.e
 
 For a local trial only, `docker compose up -d --build` uses placeholder passwords and serves on http://localhost:8080. Do not expose that to a network.
 
+### Prebuilt images
+
+Published images are built from `master` and from `v*` tags:
+
+```
+ghcr.io/wtao02/vitryne:latest
+ghcr.io/wtao02/vitryne:<version>
+ghcr.io/wtao02/vitryne:gpu-latest
+```
+
+To pull instead of build, use `docker-compose.remote.yml`:
+
+```sh
+docker compose -f docker-compose.remote.yml pull
+docker compose -f docker-compose.remote.yml up -d
+```
+
+Pin a version with `VITRYNE_IMAGE=ghcr.io/wtao02/vitryne:v0.1.0`. The package must be public for anonymous pulls, or log in with `docker login ghcr.io -u <user>` first.
+
 ### Notes
 
 - **Configuration:** `.env.example` holds the required secrets and host settings. FFmpeg, the database name/user and the S3 connection are set in `docker-compose.prod.yml`.
