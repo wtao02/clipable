@@ -111,8 +111,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      createbuckets:
-        condition: service_completed_successfully
 
   postgres:
     image: postgres:14
@@ -137,20 +135,6 @@ services:
     volumes:
       - minio_data:/data
 
-  createbuckets:
-    image: bitnamilegacy/minio-client:latest
-    depends_on:
-      - minio
-    restart: "no"
-    entrypoint: >
-      /bin/sh -c "
-      until /opt/bitnami/minio-client/bin/mc alias set vitryne http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 1; done;
-      /opt/bitnami/minio-client/bin/mc mb -p vitryne/clips;
-      exit 0;
-      "
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vitryne}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
 
 volumes:
   pg_data: {}
@@ -191,8 +175,9 @@ If you already run Postgres and an S3 bucket, use only the `vitryne` service and
 
 - **Configuration:** `.env.example` holds the required secrets and host settings. FFmpeg, the database name/user and the S3 connection are set in `docker-compose.prod.yml`.
 - **Tuning:** fewer or lower `FFMPEG_QUALITY_PRESETS` means faster encodes and less storage, for example `640x360-30@1,1280x720-30@5,1920x1080-30@8`.
-- **External S3:** point `S3_ADDRESS`, `S3_ACCESS`, `S3_SECRET` and `S3_BUCKET` at your provider and remove the `minio` and `createbuckets` services.
+- **External S3:** point `S3_ADDRESS`, `S3_ACCESS`, `S3_SECRET` and `S3_BUCKET` at your provider and remove the `minio` service. The app creates the bucket on first start if it does not exist.
 - **GPU:** use `gpu.docker-compose.yml` with the NVIDIA Container Toolkit; it encodes with `h264_nvenc`.
+- **Bucket:** the app creates the `clips` bucket on first start, so there is no separate init container to run or restart.
 - **Backups:** back up the Postgres database and the `clips` bucket. Both are required to restore a working instance.
 - **Upgrades:** `git pull`, then rebuild with the same compose command. Database migrations run on start; back up first.
 

@@ -22,16 +22,6 @@ services:
       - "MINIO_SECRET_KEY=myminiokeythatishouldchange123"
     command: server /data --console-address ":9001"
 
-  createbuckets:
-    image: minio/mc
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set vitryne http://minio:9000 minio myminiokeythatishouldchange123;
-      /usr/bin/mc mb vitryne/clips;
-      exit 0;
-      "
 
   vitryne:
     deploy:

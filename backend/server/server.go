@@ -2,6 +2,7 @@
 package server
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"fmt"
@@ -30,6 +31,39 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
+
+// ensureBucket waits for object storage and creates the bucket on first boot,
+// so a fresh instance needs no separate bucket-init container.
+func ensureBucket(cfg *config.Config, s3 *minio.Client) error {
+	var lastErr error
+
+	for attempt := 0; attempt < 30; attempt++ {
+		exists, err := s3.BucketExists(context.Background(), cfg.S3.Bucket)
+
+		if err == nil && exists {
+			return nil
+		}
+
+		if err == nil {
+			err = s3.MakeBucket(context.Background(), cfg.S3.Bucket, minio.MakeBucketOptions{})
+
+			if err == nil {
+				log.Infoln("Created bucket", cfg.S3.Bucket)
+				return nil
+			}
+
+			// Another instance may have created it between the two calls.
+			if exists, checkErr := s3.BucketExists(context.Background(), cfg.S3.Bucket); checkErr == nil && exists {
+				return nil
+			}
+		}
+
+		lastErr = err
+		time.Sleep(time.Second)
+	}
+
+	return errors.Wrap(lastErr, "unable to connect to S3 or create bucket")
+}
 
 // Server objects contains private route and config details
 type Server struct {
@@ -88,8 +122,8 @@ func New(cfg *config.Config) (*Server, error) {
 		return nil, errors.Wrap(err, "failed to create s3 client")
 	}
 
-	if s3.IsOffline() {
-		return nil, errors.New("unable to connect to S3")
+	if err := ensureBucket(cfg, s3); err != nil {
+		return nil, err
 	}
 
 	group, err := routes.DefaultServiceGroup(cfg, db, s3)

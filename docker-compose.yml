@@ -1,3 +1,5 @@
+# Local trial stack with placeholder passwords. Do not expose it to a network.
+# For a real deployment use docker-compose.prod.yml.
 services:
   postgres:
     image: postgres:14
@@ -12,26 +14,14 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio
+    image: elestio/minio:latest
     volumes:
       - minio_data:/data
-    # ports:
-    #   - 9001:9001
     environment:
-      - "MINIO_ACCESS_KEY=minio"
-      - "MINIO_SECRET_KEY=myminiokeythatishouldchange123"
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: myminiokeythatishouldchange123
     command: server /data --console-address ":9001"
 
-  createbuckets:
-    image: minio/mc
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set vitryne http://minio:9000 minio myminiokeythatishouldchange123;
-      /usr/bin/mc mb vitryne/clips;
-      exit 0;
-      "
   vitryne:
     build:
       context: .
@@ -40,7 +30,7 @@ services:
     # Configuration reference: README.md or .env.example
     environment:
       MAX_UPLOAD_SIZE: 5GB
-      FFMPEG_CONCURRENCY: 1 
+      FFMPEG_CONCURRENCY: 1
       FFMPEG_THREADS: 0
       FFMPEG_PRESET: medium
       FFMPEG_TUNE: film
@@ -55,7 +45,7 @@ services:
       S3_ACCESS: minio
       S3_SECRET: myminiokeythatishouldchange123
       S3_ADDRESS: minio:9000
-      S3_SECURE: false
+      S3_SECURE: "false"
     ports:
       - 80:80
     depends_on:
