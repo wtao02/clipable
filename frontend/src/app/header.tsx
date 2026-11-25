@@ -13,7 +13,7 @@ export default function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchParam = searchParams.get("search") ?? "";
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/setup";
   const isPrivateHome = pathname === "/" && !userContext.loggedIn;
   const isPrivateUpload = pathname === "/upload" && !userContext.loggedIn;
   const hideAccount = isAuthPage || isPrivateHome || isPrivateUpload;
@@ -54,7 +54,11 @@ export default function Header() {
           role="search"
           action="/"
           method="get"
-          className="order-last w-full sm:order-none sm:ml-auto sm:w-auto sm:max-w-xs sm:flex-1"
+          className={
+            isAuthPage
+              ? "hidden"
+              : "order-last w-full sm:order-none sm:ml-auto sm:w-auto sm:max-w-xs sm:flex-1"
+          }
         >
           <div className="relative">
             <MagnifyingGlassIcon

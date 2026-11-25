@@ -8,6 +8,7 @@ import {
   getCategories,
   getClips,
   searchClips,
+  setupStatus,
 } from "@/shared/api";
 import { UserContext } from "@/context/user-context";
 import ClipGrid, { ClipGridSkeleton } from "@/shared/clip-grid";
@@ -39,6 +40,24 @@ export default function Home() {
   useEffect(() => {
     setSelectedCategory("all");
   }, [userContext.user?.id]);
+
+  useEffect(() => {
+    if (userContext.loading || userContext.loggedIn) return;
+
+    let cancelled = false;
+
+    setupStatus()
+      .then((needsSetup) => {
+        if (!cancelled && needsSetup) {
+          window.location.replace("/setup");
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userContext.loading, userContext.loggedIn]);
 
   useEffect(() => {
     if (userContext.loading || query === null) return;

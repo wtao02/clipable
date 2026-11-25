@@ -42,8 +42,8 @@ func (r *Routes) Handler(handler func(u *models.User, r *http.Request) (int, []b
 
 func (r *Routes) ResponseHandler(handler func(w http.ResponseWriter, r *http.Request) (int, []byte, error)) http.HandlerFunc {
 	return r.FullHandler(func(u *models.User, w http.ResponseWriter, r *http.Request) (int, io.ReadCloser, http.Header, error) {
-		code, _, err := handler(w, r)
-		return code, nil, nil, err
+		code, body, err := handler(w, r)
+		return code, io.NopCloser(bytes.NewReader(body)), nil, err
 	})
 }
 

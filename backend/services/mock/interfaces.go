@@ -28,14 +28,16 @@ func (b *BrokenCodec) Unmarshal(data []byte, v interface{}) error {
 }
 
 type UserProvider struct {
-	FindHook           func(ctx context.Context, uid int64) (*models.User, error)
-	FindManyHook       func(ctx context.Context, mods ...qm.QueryMod) (models.UserSlice, error)
-	FindUsernameHook   func(ctx context.Context, username string) (*models.User, error)
-	ExistsHook         func(ctx context.Context, uid int64) (bool, error)
-	ExistsUsernameHook func(ctx context.Context, username string) (bool, error)
-	SearchManyHook     func(ctx context.Context, query string) (models.UserSlice, error)
-	UpdateHook         func(ctx context.Context, user *models.User, columns boil.Columns) error
-	CreateHook         func(ctx context.Context, user *models.User, columns boil.Columns) error
+	FindHook             func(ctx context.Context, uid int64) (*models.User, error)
+	FindManyHook         func(ctx context.Context, mods ...qm.QueryMod) (models.UserSlice, error)
+	FindUsernameHook     func(ctx context.Context, username string) (*models.User, error)
+	ExistsHook           func(ctx context.Context, uid int64) (bool, error)
+	ExistsUsernameHook   func(ctx context.Context, username string) (bool, error)
+	OwnerExistsHook      func(ctx context.Context) (bool, error)
+	CreateFirstOwnerHook func(ctx context.Context, user *models.User, columns boil.Columns) (bool, error)
+	SearchManyHook       func(ctx context.Context, query string) (models.UserSlice, error)
+	UpdateHook           func(ctx context.Context, user *models.User, columns boil.Columns) error
+	CreateHook           func(ctx context.Context, user *models.User, columns boil.Columns) error
 }
 
 func (m *UserProvider) Find(ctx context.Context, uid int64) (*models.User, error) {
@@ -52,6 +54,12 @@ func (m *UserProvider) Exists(ctx context.Context, uid int64) (bool, error) {
 }
 func (m *UserProvider) ExistsUsername(ctx context.Context, username string) (bool, error) {
 	return m.ExistsUsernameHook(ctx, username)
+}
+func (m *UserProvider) OwnerExists(ctx context.Context) (bool, error) {
+	return m.OwnerExistsHook(ctx)
+}
+func (m *UserProvider) CreateFirstOwner(ctx context.Context, user *models.User, columns boil.Columns) (bool, error) {
+	return m.CreateFirstOwnerHook(ctx, user, columns)
 }
 func (m *UserProvider) SearchMany(ctx context.Context, query string) (models.UserSlice, error) {
 	return m.SearchManyHook(ctx, query)

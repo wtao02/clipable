@@ -27,6 +27,9 @@ type Users interface {
 	Exists(ctx context.Context, uid int64) (bool, error)
 	ExistsUsername(ctx context.Context, username string) (bool, error)
 
+	OwnerExists(ctx context.Context) (bool, error)
+	CreateFirstOwner(ctx context.Context, user *models.User, columns boil.Columns) (bool, error)
+
 	SearchMany(ctx context.Context, query string) (models.UserSlice, error)
 
 	Update(ctx context.Context, user *models.User, columns boil.Columns) error

@@ -10,6 +10,10 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+// systemUsername is the placeholder row created by the initial migration.
+// It is not a real account and does not count as the instance owner.
+const systemUsername = "Anonymous"
+
 type users struct {
 	db *sql.DB
 }
@@ -37,6 +41,46 @@ func (u *users) Exists(ctx context.Context, uid int64) (bool, error) {
 
 func (u *users) ExistsUsername(ctx context.Context, username string) (bool, error) {
 	return models.Users(models.UserWhere.Username.EQ(username)).Exists(ctx, u.db)
+}
+
+// OwnerExists reports whether a real account exists. The migration's
+// placeholder user does not count, so a fresh instance reports false.
+func (u *users) OwnerExists(ctx context.Context) (bool, error) {
+	return models.Users(models.UserWhere.Username.NEQ(systemUsername)).Exists(ctx, u.db)
+}
+
+// CreateFirstOwner creates the instance owner only if no real account exists.
+// The advisory lock keeps two simultaneous setup requests from both winning.
+func (u *users) CreateFirstOwner(ctx context.Context, user *models.User, columns boil.Columns) (bool, error) {
+	tx, err := u.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock(724501)"); err != nil {
+		return false, err
+	}
+
+	exists, err := models.Users(models.UserWhere.Username.NEQ(systemUsername)).Exists(ctx, tx)
+
+	if err != nil {
+		return false, err
+	} else if exists {
+		return false, nil
+	}
+
+	if err := user.Insert(ctx, tx, columns); err != nil {
+		return false, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (u *users) SearchMany(ctx context.Context, query string) (models.UserSlice, error) {

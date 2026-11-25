@@ -1,7 +1,7 @@
 "use client";
 
 import { UserContext } from "@/context/user-context";
-import { register, registrationAllowed } from "@/shared/api";
+import { register, registrationAllowed, setupStatus } from "@/shared/api";
 import Alert from "@/shared/alert";
 import PageTitle from "@/shared/page-title";
 import { Button, Field, Input, Skeleton } from "@/shared/ui";
@@ -25,6 +25,14 @@ export default function Register() {
       .then(setRegistrationAllowed)
       .catch(() => setRegistrationAllowed(false));
   }, []);
+
+  useEffect(() => {
+    setupStatus()
+      .then((needsSetup) => {
+        if (needsSetup) router.replace("/setup");
+      })
+      .catch(() => undefined);
+  }, [router]);
 
   useEffect(() => {
     if (!userContext.loading && userContext.loggedIn) {

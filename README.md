@@ -56,9 +56,11 @@ clips.example.com {
 }
 ```
 
-### 4. Create an account
+### 4. Create the owner account
 
-Open the site, register your account, then set `ALLOW_REGISTRATION=false` in `.env` and run the compose command again.
+Open the site. The first visit goes straight to **Create the owner account**, because a fresh instance has no users and no default credentials. Pick a username and password; that account is signed in immediately and owns the library.
+
+To let other people register, leave `ALLOW_REGISTRATION=true`. To keep the instance private, set `ALLOW_REGISTRATION=false` in `.env` and run the compose command again. Your own account keeps working either way.
 
 For a local trial only, `docker compose up -d --build` uses placeholder passwords and serves on http://localhost:8080. Do not expose that to a network.
 

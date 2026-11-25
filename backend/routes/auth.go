@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"webserver/modelsx"
 
@@ -21,6 +22,73 @@ func (r *Routes) AllowRegistration(resp http.ResponseWriter, req *http.Request) 
 	}
 
 	return http.StatusOK, nil, nil
+}
+
+// SetupStatus reports whether the instance still needs its first account.
+func (r *Routes) SetupStatus(resp http.ResponseWriter, req *http.Request) (int, []byte, error) {
+	exists, err := r.Users.OwnerExists(req.Context())
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "Failed to check for an owner")
+	}
+
+	return http.StatusOK, []byte(fmt.Sprintf(`{"needs_setup":%t}`, !exists)), nil
+}
+
+// Setup creates the instance owner and signs them in. It is only available
+// while no real account exists, and ignores ALLOW_REGISTRATION so a fresh
+// instance can never lock itself out.
+func (r *Routes) Setup(resp http.ResponseWriter, req *http.Request) (int, []byte, error) {
+	ownerExists, err := r.Users.OwnerExists(req.Context())
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "Failed to check for an owner")
+	} else if ownerExists {
+		return http.StatusConflict, []byte("Setup is already complete"), nil
+	}
+
+	usr, err := modelsx.ParseUser(req, modelsx.UserValidateRegister)
+
+	if err != nil {
+		return http.StatusBadRequest, []byte(err.Error()), nil
+	}
+
+	exists, err := r.Users.ExistsUsername(req.Context(), usr.Username.String)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "Failed to check if username exists")
+	}
+
+	if exists {
+		return http.StatusConflict, []byte("Username already exists"), nil
+	}
+
+	hash, err := argon2id.CreateHash(usr.Password.String, argon2id.DefaultParams)
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "Failed to hash password")
+	}
+
+	usr.Password.String = hash
+
+	model := usr.ToModel()
+
+	created, err := r.Users.CreateFirstOwner(req.Context(), model, boil.Whitelist(usr.GetUpdateWhitelist()...))
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "Failed to create owner")
+	} else if !created {
+		return http.StatusConflict, []byte("Setup is already complete"), nil
+	}
+
+	session, _ := r.store.Get(req, SESSION_NAME)
+
+	session.Values[SESSION_KEY_ID] = model.ID
+	if err := session.Save(req, resp); err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "Failed to save session")
+	}
+
+	return modelsx.UserFromModel(model).Marshal()
 }
 
 func (r *Routes) Login(resp http.ResponseWriter, req *http.Request) (int, []byte, error) {

@@ -197,6 +197,24 @@ export const registrationAllowed = async (): Promise<boolean> => {
   return response.ok;
 };
 
+export const setupStatus = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_URL}/setup`, { cache: "no-store" });
+    if (!response.ok) return false;
+    const json = (await response.json()) as { needs_setup?: boolean };
+    return Boolean(json.needs_setup);
+  } catch {
+    return false;
+  }
+};
+
+export const createOwner = async (username: string, password: string): Promise<Response> =>
+  fetch(`${API_URL}/setup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
 export const login = async (username: string, password: string): Promise<boolean> => {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",

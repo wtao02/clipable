@@ -80,6 +80,9 @@ func New(cfg *config.Config, g *services.Group, store sessions.Store) (*Routes, 
 	internalEndpoint("/progress/{cid}", r.SetProgress, http.MethodPost)
 
 	// AUTH ENDPOINTS
+	endpoint("/setup", r.ResponseHandler(r.SetupStatus), http.MethodGet)
+	endpoint("/setup", r.ResponseHandler(r.Setup), http.MethodPost)
+
 	endpoint("/auth/login", r.ResponseHandler(r.Login), http.MethodPost)
 	endpoint("/auth/register", r.ResponseHandler(r.Register), http.MethodPost)
 	endpoint("/auth/register", r.ResponseHandler(r.AllowRegistration), http.MethodOptions)
