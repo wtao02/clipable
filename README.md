@@ -29,7 +29,7 @@ cd vitryne
 cp .env.example .env
 ```
 
-Generate each secret with `openssl rand -hex 32` and fill in `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD`, `DB_IDHASHKEY` and `COOKIE_KEY`. Set `COOKIE_DOMAIN` to the hostname you will browse to, or leave it empty.
+Generate each secret with `openssl rand -hex 32` and fill in `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD`, `DB_IDHASHKEY` and `COOKIE_KEY`. Leave `COOKIE_DOMAIN` empty unless you serve the instance from several subdomains; a mismatched value makes the browser reject the session cookie.
 
 `DB_IDHASHKEY` is permanent: changing it later changes every clip URL and breaks shared links.
 
@@ -153,8 +153,8 @@ MINIO_ROOT_PASSWORD=change-me
 DB_IDHASHKEY=change-me
 COOKIE_KEY=change-me
 
-# Public hostname the site is served from; leave empty to accept any host
-COOKIE_DOMAIN=clips.example.com
+# Optional; leave unset for a host-only session cookie that works on any host
+# COOKIE_DOMAIN=
 
 # Set to false after your accounts exist
 ALLOW_REGISTRATION=true

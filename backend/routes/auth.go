@@ -3,15 +3,61 @@ package routes
 import (
 	"database/sql"
 	"fmt"
+	"net"
 	"net/http"
+	"strings"
+	"sync"
 	"webserver/modelsx"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/friendsofgo/errors"
+	"github.com/gorilla/sessions"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const SESSION_NAME = "webserver"
+
+var cookieDomainWarning sync.Once
+
+// session loads the session and drops a configured cookie domain that the
+// request host does not belong to. Without this, copying a placeholder
+// COOKIE_DOMAIN lets the browser reject the cookie, so login appears to work
+// and then the next page treats the visitor as signed out.
+func (r *Routes) session(req *http.Request) *sessions.Session {
+	session, _ := r.store.Get(req, SESSION_NAME)
+	r.applyCookieDomain(session, req)
+	return session
+}
+
+func (r *Routes) applyCookieDomain(session *sessions.Session, req *http.Request) {
+	domain := strings.TrimPrefix(strings.ToLower(r.cfg.Cookie.Domain), ".")
+
+	if domain == "" {
+		return
+	}
+
+	host := strings.ToLower(req.Host)
+
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+
+	if host == domain || strings.HasSuffix(host, "."+domain) {
+		return
+	}
+
+	if session.Options.Domain != "" {
+		cookieDomainWarning.Do(func() {
+			log.WithFields(log.Fields{"cookie_domain": domain, "request_host": host}).
+				Warnln("COOKIE_DOMAIN does not match this host; using a host-only session cookie")
+		})
+	}
+
+	session.Options.Domain = ""
+}
+
 const SESSION_KEY_UID = "uid"
 const SESSION_KEY_OAUTH_STATE = "oauth-state"
 const SESSION_KEY_ID = "id"
@@ -81,7 +127,7 @@ func (r *Routes) Setup(resp http.ResponseWriter, req *http.Request) (int, []byte
 		return http.StatusConflict, []byte("Setup is already complete"), nil
 	}
 
-	session, _ := r.store.Get(req, SESSION_NAME)
+	session := r.session(req)
 
 	session.Values[SESSION_KEY_ID] = model.ID
 	if err := session.Save(req, resp); err != nil {
@@ -92,7 +138,7 @@ func (r *Routes) Setup(resp http.ResponseWriter, req *http.Request) (int, []byte
 }
 
 func (r *Routes) Login(resp http.ResponseWriter, req *http.Request) (int, []byte, error) {
-	session, _ := r.store.Get(req, SESSION_NAME)
+	session := r.session(req)
 
 	json, err := modelsx.ParseUser(req, modelsx.UserValidateRegister)
 
@@ -127,7 +173,7 @@ func (r *Routes) Login(resp http.ResponseWriter, req *http.Request) (int, []byte
 }
 
 func (r *Routes) Logout(resp http.ResponseWriter, req *http.Request) (int, []byte, error) {
-	session, _ := r.store.Get(req, SESSION_NAME)
+	session := r.session(req)
 
 	session.Options.MaxAge = -1
 
@@ -175,7 +221,7 @@ func (r *Routes) Register(resp http.ResponseWriter, req *http.Request) (int, []b
 		return http.StatusInternalServerError, nil, errors.Wrap(err, "Failed to create user")
 	}
 
-	session, _ := r.store.Get(req, SESSION_NAME)
+	session := r.session(req)
 
 	session.Values[SESSION_KEY_ID] = model.ID
 	if err := session.Save(req, resp); err != nil {
